@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -16,8 +16,27 @@ import {
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
+type Category = "" | "Payroll" | "Utilities" | "Bottle Washing" | "Fuel & Transport" | "Vehicle Maintenance" | "Rent & Lease" | "Marketing" | "Office Supplies" | "Other";
+
+type PaymentMethod = "" | "Cash" | "Card" | "Bank Transfer" | "Mobile Wallet";
+
+interface FormData {
+  category: Category;
+  description: string;
+  amount: string;
+  date: string;
+  paymentMethod: PaymentMethod;
+  vendor: string;
+  referenceNumber: string;
+  notes: string;
+}
+
+interface Errors {
+  [key: string]: string;
+}
+
 export default function AddExpense() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     category: "",
     description: "",
     amount: "",
@@ -28,18 +47,18 @@ export default function AddExpense() {
     notes: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({});
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value as any }));  // Quick cast for empty string, but types allow it now
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     if (!formData.category) newErrors.category = "Category is required";
     if (!formData.description.trim())
       newErrors.description = "Description is required";
@@ -52,7 +71,7 @@ export default function AddExpense() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
       console.log("Expense Data:", formData);

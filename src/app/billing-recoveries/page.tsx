@@ -58,7 +58,7 @@ export default function BillingRecoveries() {
     },
   ]);
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: "high" | "medium" | "low" | string) => {
     switch (priority) {
       case "high":
         return "bg-red-50 text-red-700 border border-red-200";
@@ -70,6 +70,7 @@ export default function BillingRecoveries() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
 
   return (
     <DefaultLayout>

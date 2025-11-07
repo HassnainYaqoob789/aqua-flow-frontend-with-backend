@@ -1,12 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { ArrowLeft, User, Phone, MapPin, Truck, Wifi, Save } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
+interface FormData {
+  id: string;
+  name: string;
+  contact: string;
+  zone: string;
+  vehicle: string;
+  status: "Online" | "Offline";
+  mode: "Online Mode" | "Hybrid Mode" | "Offline Mode";
+}
+
+interface Errors {
+  [key: string]: string;
+}
+
 export default function AddDriver() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     id: "",
     name: "",
     contact: "",
@@ -16,20 +30,20 @@ export default function AddDriver() {
     mode: "Online Mode",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({});
 
-  const zones = [
+  const zones: string[] = [
     "Zone A - Downtown",
     "Zone B - Uptown",
     "Zone C - Business District",
     "Zone D - Suburbs",
   ];
 
-  const modes = ["Online Mode", "Hybrid Mode", "Offline Mode"];
-  const statuses = ["Online", "Offline"];
+  const modes: ("Online Mode" | "Hybrid Mode" | "Offline Mode")[] = ["Online Mode", "Hybrid Mode", "Offline Mode"];
+  const statuses: ("Online" | "Offline")[] = ["Online", "Offline"];
 
   // Auto-generate initials from name
-  const getInitials = (name) => {
+  const getInitials = (name: string): string => {
     if (!name) return "";
     return name
       .split(" ")
@@ -39,7 +53,7 @@ export default function AddDriver() {
       .slice(0, 2);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error on change
@@ -48,18 +62,20 @@ export default function AddDriver() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     if (!formData.id.trim()) newErrors.id = "Driver ID is required";
     if (!formData.name.trim()) newErrors.name = "Driver name is required";
     if (!formData.contact.trim()) newErrors.contact = "Contact number is required";
     if (!formData.zone.trim()) newErrors.zone = "Zone is required";
     if (!formData.vehicle.trim()) newErrors.vehicle = "Vehicle ID is required";
+    if (!formData.status) newErrors.status = "Status is required";
+    if (!formData.mode) newErrors.mode = "Mode is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
       // Auto-add initials
@@ -217,7 +233,9 @@ export default function AddDriver() {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                className={`w-full rounded-lg border ${
+                  errors.status ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               >
                 {statuses.map((status) => (
                   <option key={status} value={status}>
@@ -225,6 +243,7 @@ export default function AddDriver() {
                   </option>
                 ))}
               </select>
+              {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
           </div>
 
@@ -238,7 +257,9 @@ export default function AddDriver() {
               name="mode"
               value={formData.mode}
               onChange={handleChange}
-              className="w-full rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+              className={`w-full rounded-lg border ${
+                errors.mode ? "border-red-500" : "border-stroke"
+              } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             >
               {modes.map((mode) => (
                 <option key={mode} value={mode}>
@@ -246,6 +267,7 @@ export default function AddDriver() {
                 </option>
               ))}
             </select>
+            {errors.mode && <p className="mt-1 text-xs text-red-500">{errors.mode}</p>}
           </div>
 
           {/* Submit Button */}

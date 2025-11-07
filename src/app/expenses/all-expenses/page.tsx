@@ -27,8 +27,19 @@ const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), {
   ssr: false,
 });
 
+interface Order {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  vendor: string;
+  amount: string;
+  payment: string;
+  status: "Approved" | "Pending" | "Processing" | "Rejected";
+}
+
 export default function ExpenseManagement() {
-  const [orders] = useState([
+  const [orders] = useState<Order[]>([
     {
       id: "EXP-001",
       date: "Nov 2, 2025",
@@ -91,7 +102,19 @@ export default function ExpenseManagement() {
     },
   ]);
 
-  const getStatusColor = (status: string) => {
+  // Expense categories data for ChartThree (pie chart)
+  const expenseCategoriesData = [
+    { name: "Fuel", value: 2450 },
+    { name: "Maintenance", value: 1850 },
+    { name: "Staff", value: 12500 },
+    { name: "Equipment", value: 3200 },
+    { name: "Utilities", value: 890 },
+    { name: "Marketing", value: 4100 },
+  ];
+
+  const chartColors = ["#3C50E0", "#6577F3", "#8FD0EF", "#0FADCF", "#FFBB28", "#00C49F"];
+
+  const getStatusColor = (status: Order["status"]): string => {
     switch (status) {
       case "Approved":
         return "bg-green-100 text-green-700";
@@ -166,7 +189,7 @@ export default function ExpenseManagement() {
               Expense by Category
             </h3>
           </div>
-          <ChartThree />
+          <ChartThree data={expenseCategoriesData} colors={chartColors} />
         </div>
 
         {/* Line Chart */}
@@ -209,9 +232,9 @@ export default function ExpenseManagement() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, i) => (
+              {orders.map((order) => (
                 <tr
-                  key={i}
+                  key={order.id}
                   className="border-b border-stroke hover:bg-gray-50 dark:border-strokedark dark:hover:bg-meta-4"
                 >
                   <td className="p-4 text-sm text-gray-700 dark:text-white">

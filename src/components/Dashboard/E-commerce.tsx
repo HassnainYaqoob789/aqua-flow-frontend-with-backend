@@ -10,26 +10,46 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Metadata } from "next";
-// Import Charts
-import ChartOne from "../Charts/ChartOne";
-const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), {
-  ssr: false,
-});
 
+// Dynamic imports for charts to avoid SSR issues
+const ChartOne = dynamic(() => import("@/components/Charts/ChartOne"), { ssr: false });
+const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), { ssr: false });
 
 export const metadata: Metadata = {
-  title: "AquaFlow", // Updated to match page content (Medication Checker tha galat copy-paste)
-  description: "Manage and track all water delivery orders", // Page ke hisaab se
+  title: "AquaFlow",
+  description: "Manage and track all water delivery orders",
 };
 
+interface StatData {
+  title: string;
+  value: string;
+  rate: string;
+  trend: "up" | "down";
+  icon: React.ComponentType<{ className?: string; size?: number }>;  // Explicit Lucide icon type
+  bgColor: string;
+}
+
+interface RecentOrder {
+  id: string;
+  status: string;
+  amount: string;
+  time: string;
+}
+
+interface TopCustomer {
+  name: string;
+  orders: string;
+  value: string;
+}
+
 export default function DashboardPage() {
-  const statsData = [
+  const statsData: StatData[] = [
     {
       title: "Total Orders",
       value: "1,234",
       rate: "+12.5%",
       trend: "up",
-      icon: ShoppingCart,
+      icon: ShoppingCart as React.ComponentType<{ className?: string; size?: number }>,  // Type assertion for TS
       bgColor: "bg-blue-100 dark:bg-blue-900/30",
     },
     {
@@ -37,7 +57,7 @@ export default function DashboardPage() {
       value: "$45,680",
       rate: "+4.2%",
       trend: "up",
-      icon: TrendingUp,
+      icon: TrendingUp as React.ComponentType<{ className?: string; size?: number }>,
       bgColor: "bg-green-100 dark:bg-green-900/30",
     },
     {
@@ -45,7 +65,7 @@ export default function DashboardPage() {
       value: "856",
       rate: "+8.1%",
       trend: "up",
-      icon: Users2,
+      icon: Users2 as React.ComponentType<{ className?: string; size?: number }>,
       bgColor: "bg-purple-100 dark:bg-purple-900/30",
     },
     {
@@ -53,19 +73,19 @@ export default function DashboardPage() {
       value: "24",
       rate: "-3.2%",
       trend: "down",
-      icon: Truck,
+      icon: Truck as React.ComponentType<{ className?: string; size?: number }>,
       bgColor: "bg-orange-100 dark:bg-orange-900/30",
     },
   ];
 
-  const recentOrders = [
+  const recentOrders: RecentOrder[] = [
     { id: "P1234", status: "In progress", amount: "$240", time: "2 days ago" },
     { id: "P1235", status: "Pending", amount: "$180", time: "1 day ago" },
     { id: "P1236", status: "Delivered", amount: "$320", time: "3 hours ago" },
     { id: "P1237", status: "In progress", amount: "$90", time: "30 mins ago" },
   ];
 
-  const topCustomers = [
+  const topCustomers: TopCustomer[] = [
     { name: "Acme Corp", orders: "5 orders", value: "$1890" },
     { name: "TechStart Inc", orders: "3 orders", value: "$1620" },
     { name: "Green Valley", orders: "8 orders", value: "$1540" },
@@ -73,10 +93,17 @@ export default function DashboardPage() {
     { name: "Metro School", orders: "6 orders", value: "$1125" },
   ];
 
-  const getStatusColor = (status:string) => {
+  // Dummy data for ChartThree
+  const chartThreeData = [
+    { name: "Orders", value: 1234 },
+    { name: "Customers", value: 856 },
+    { name: "Deliveries", value: 24 },
+  ];
+  const chartColors = ["#3C50E0", "#6577F3", "#8FD0EF"];
+
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case "In progress":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400";
       case "Pending":
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400";
       case "Delivered":
@@ -147,7 +174,7 @@ export default function DashboardPage() {
             <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
               Performance Overview
             </h3>
-            <ChartThree />
+            <ChartThree data={chartThreeData} colors={chartColors} />
           </div>
         </div>
 
@@ -164,9 +191,9 @@ export default function DashboardPage() {
               </a>
             </div>
             <div className="space-y-4">
-              {recentOrders.map((order, idx) => (
+              {recentOrders.map((order) => (
                 <div
-                  key={idx}
+                  key={order.id}
                   className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                 >
                   <div>
@@ -200,9 +227,9 @@ export default function DashboardPage() {
               </a>
             </div>
             <div className="space-y-4">
-              {topCustomers.map((customer, idx) => (
+              {topCustomers.map((customer) => (
                 <div
-                  key={idx}
+                  key={customer.name}
                   className="pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                 >
                   <div className="flex items-center gap-3 mb-2">

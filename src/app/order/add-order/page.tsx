@@ -1,12 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import { ArrowLeft, Calendar, MapPin, Package, User, DollarSign, CreditCard, Clock, Truck, Save } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
+interface FormData {
+  customer: string;
+  address: string;
+  items: string;
+  date: string;
+  time: string;
+  driver: string;
+  amount: string;
+  payment: "COD" | "Card" | "Wallet";
+  status: "Pending";
+}
+
+interface Errors {
+  [key: string]: string;
+}
+
 export default function AddOrder() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     customer: "",
     address: "",
     items: "",
@@ -18,9 +34,9 @@ export default function AddOrder() {
     status: "Pending", // Default status
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({});
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error on change
@@ -29,14 +45,14 @@ export default function AddOrder() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     if (!formData.customer.trim()) newErrors.customer = "Customer name is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.items.trim()) newErrors.items = "Items details are required";
     if (!formData.date) newErrors.date = "Date is required";
     if (!formData.time.trim()) newErrors.time = "Time slot is required";
-    if (!formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
+    if (!formData.amount || isNaN(Number(formData.amount)) || parseFloat(formData.amount) <= 0) {
       newErrors.amount = "Valid amount is required";
     }
     if (!formData.driver.trim()) newErrors.driver = "Driver assignment is required";
@@ -44,7 +60,7 @@ export default function AddOrder() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
       // Simulate API call or add to orders list
@@ -63,6 +79,7 @@ export default function AddOrder() {
         payment: "COD",
         status: "Pending",
       });
+      setErrors({});
     }
   };
 

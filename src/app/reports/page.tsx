@@ -16,11 +16,13 @@ import {
 
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import ChartThree from "@/components/Charts/ChartThree";
-import ChartOne from "@/components/Charts/ChartOne";
-import ChartTwo from "@/components/Charts/ChartTwo";
-import TableFour from "@/components/Tables/TableFour";
-import ProductRevenueChart from "@/components/Tables/ProductRevenueChart";
+import dynamic from "next/dynamic";
+
+// Dynamic imports for charts to avoid SSR window issues
+const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), { ssr: false });
+const ChartOne = dynamic(() => import("@/components/Charts/ChartOne"), { ssr: false });
+const ChartTwo = dynamic(() => import("@/components/Charts/ChartTwo"), { ssr: false });
+const ProductRevenueChart = dynamic(() => import("@/components/Tables/ProductRevenueChart"), { ssr: false });
 
 export default function ReportsAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
@@ -208,18 +210,16 @@ export default function ReportsAnalytics() {
               Product Sales Distribution
             </h3>
           </div>
-          <ChartThree />
+          <ChartThree data={productSalesData} colors={COLORS} />
         </div>
         <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-            <div className="mb-4 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-indigo-600" />
-              <h3 className="font-semibold text-black dark:text-white">
-                Product Revenue
-              </h3>
-            </div>
-            <ProductRevenueChart/>
+          <div className="mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-indigo-600" />
+            <h3 className="font-semibold text-black dark:text-white">
+              Product Revenue
+            </h3>
           </div>
+          <ProductRevenueChart data={productRevenueData} />
         </div>
       </div>
     </DefaultLayout>

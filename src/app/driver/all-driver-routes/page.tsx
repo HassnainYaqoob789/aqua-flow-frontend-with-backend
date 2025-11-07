@@ -20,8 +20,27 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
 
+interface TodayDeliveries {
+  completed: number;
+  pending: number;
+}
+
+interface Driver {
+  id: string;
+  name: string;
+  initials: string;
+  contact: string;
+  zone: string;
+  vehicle: string;
+  todayDeliveries: TodayDeliveries;
+  performance: number;
+  lastSync: string;
+  status: "Online" | "Offline";
+  mode: "Online Mode" | "Hybrid Mode" | "Offline Mode";
+}
+
 export default function DriverRouteManagement() {
-  const [drivers] = useState([
+  const [drivers] = useState<Driver[]>([
     {
       id: "DRV-001",
       name: "Michael Johnson",
@@ -76,7 +95,7 @@ export default function DriverRouteManagement() {
     },
   ]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: "Online" | "Offline"): string => {
     switch (status) {
       case "Online":
         return "bg-green-50 text-green-700 border border-green-200";
@@ -87,7 +106,7 @@ export default function DriverRouteManagement() {
     }
   };
 
-  const getModeColor = (mode) => {
+  const getModeColor = (mode: "Online Mode" | "Hybrid Mode" | "Offline Mode"): string => {
     if (mode.includes("Online")) return "bg-green-100 text-green-800";
     if (mode.includes("Hybrid")) return "bg-yellow-100 text-yellow-800";
     if (mode.includes("Offline")) return "bg-red-100 text-red-800";
@@ -150,7 +169,7 @@ export default function DriverRouteManagement() {
             Total Drivers
           </p>
           <p className="text-2xl font-bold text-black dark:text-white sm:text-3xl">
-            4
+            {drivers.length}
           </p>
           <div className="absolute right-3 top-3 text-gray-400">
             <User size={16} />
@@ -160,7 +179,9 @@ export default function DriverRouteManagement() {
           <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
             Active Now
           </p>
-          <p className="text-2xl font-bold text-green-600 sm:text-3xl">3</p>
+          <p className="text-2xl font-bold text-green-600 sm:text-3xl">
+            {drivers.filter((d) => d.status === "Online").length}
+          </p>
           <div className="absolute right-3 top-3 text-green-400">
             <Wifi size={16} />
           </div>
@@ -169,7 +190,9 @@ export default function DriverRouteManagement() {
           <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
             Deliveries Today
           </p>
-          <p className="text-2xl font-bold text-blue-600 sm:text-3xl">26</p>
+          <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
+            {drivers.reduce((acc, d) => acc + d.todayDeliveries.completed + d.todayDeliveries.pending, 0)}
+          </p>
           <div className="absolute right-3 top-3 text-blue-400">
             <Truck size={16} />
           </div>
@@ -178,7 +201,9 @@ export default function DriverRouteManagement() {
           <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
             Active Routes
           </p>
-          <p className="text-2xl font-bold text-purple-600 sm:text-3xl">3</p>
+          <p className="text-2xl font-bold text-purple-600 sm:text-3xl">
+            {drivers.filter((d) => d.todayDeliveries.pending > 0).length}
+          </p>
           <div className="absolute right-3 top-3 text-purple-400">
             <MapPin size={16} />
           </div>
@@ -188,7 +213,7 @@ export default function DriverRouteManagement() {
       {/* Tabs */}
       <div className="mb-4 flex border-b border-stroke dark:border-strokedark">
         <button className="relative flex-1 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-gray-500 transition-colors hover:text-primary dark:text-gray-400 lg:px-6">
-          Drivers (4)
+          Drivers ({drivers.length})
           <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 scale-x-0 bg-primary transition-transform lg:hidden"></span>
         </button>
         <button className="relative flex-1 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-gray-500 transition-colors hover:text-primary dark:text-gray-400 lg:px-6">
@@ -235,8 +260,8 @@ export default function DriverRouteManagement() {
               </tr>
             </thead>
             <tbody>
-              {drivers.map((driver, key) => (
-                <tr key={key}>
+              {drivers.map((driver) => (
+                <tr key={driver.id}>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <div className="flex items-center gap-3">
                       <div
@@ -300,13 +325,17 @@ export default function DriverRouteManagement() {
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(driver.status)}`}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                          driver.status
+                        )}`}
                       >
                         <div className="h-2 w-2 rounded-full bg-current"></div>
                         {driver.status}
                       </span>
                       <span
-                        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${getModeColor(driver.mode)}`}
+                        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${getModeColor(
+                          driver.mode
+                        )}`}
                       >
                         {driver.mode}
                       </span>
@@ -331,9 +360,9 @@ export default function DriverRouteManagement() {
 
       {/* Drivers Cards - Mobile & Tablet */}
       <div className="space-y-3 sm:space-y-4 lg:hidden">
-        {drivers.map((driver, key) => (
+        {drivers.map((driver) => (
           <div
-            key={key}
+            key={driver.id}
             className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark"
           >
             <div className="mb-3 flex items-start justify-between">
@@ -422,13 +451,17 @@ export default function DriverRouteManagement() {
                 </span>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(driver.status)}`}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                      driver.status
+                    )}`}
                   >
                     <div className="h-2 w-2 rounded-full bg-current"></div>
                     {driver.status}
                   </span>
                   <span
-                    className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${getModeColor(driver.mode)}`}
+                    className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${getModeColor(
+                      driver.mode
+                    )}`}
                   >
                     {driver.mode}
                   </span>
