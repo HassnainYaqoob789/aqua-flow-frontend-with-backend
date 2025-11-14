@@ -1,23 +1,23 @@
 "use client";
 
 import React, { useState, FormEvent } from "react";
-import { ArrowLeft, Mail, Phone, MapPin, User, DollarSign, Calendar, Globe, Save } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, User, Globe, Save } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import { useCreateCustomer } from "@/lib/api/servicesHooks";
 
 export default function AddCustomer() {
+  const createCustomerMutation = useCreateCustomer();
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     phone: "",
     address: "",
     city: "",
     postalCode: "",
     country: "",
-    companyName: "",
-    registrationDate: "",
+    password: "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -26,56 +26,58 @@ export default function AddCustomer() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error on change
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {}; // <-- type define kiya
+    const newErrors: { [key: string]: string } = {};
 
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.name.trim()) newErrors.name = "First name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Valid email is required";
-    }
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Valid email is required";
+    if (!formData.phone.trim()) newErrors.phone = "phone number is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
     if (!formData.country.trim()) newErrors.country = "Country is required";
-
+    if (!formData.password?.trim()) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
-
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      // Simulate API call or add to customers list
-      console.log("New Customer Data:", formData);
-      alert("Customer added successfully! (Check console for data)");
+    if (!validateForm()) return;
 
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        postalCode: "",
-        country: "",
-        companyName: "",
-        registrationDate: "",
-      });
-    }
+    // Call the API using your mutation
+    createCustomerMutation.mutate(
+      {
+        ...formData,
+      },
+      {
+        onSuccess: () => {
+          alert("Customer added successfully!");
+          // Reset form
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            address: "",
+            city: "",
+            postalCode: "",
+            country: "",
+          });
+        },
+        onError: (err: any) => {
+          alert(`Failed to add customer: ${err.response?.data?.message || err.message}`);
+        },
+      }
+    );
   };
 
   return (
@@ -85,7 +87,6 @@ export default function AddCustomer() {
         description="Fill in the details to create a new customer profile"
       />
 
-      {/* Header with Back Button */}
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => window.history.back()}
@@ -96,51 +97,48 @@ export default function AddCustomer() {
         </button>
       </div>
 
-      {/* Form Card */}
       <div className="rounded-sm border border-stroke bg-white px-6 py-8 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Section */}
+          {/* Full Name */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                 <User className="inline mr-2 h-4 w-4" />
-                First Name *
+                Name *
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter first name"
-                className={`w-full rounded-lg border ${errors.firstName ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.name ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.firstName && (
-                <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>
-              )}
+              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                 <User className="inline mr-2 h-4 w-4" />
-                Last Name *
+                Password *
               </label>
               <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
+                type="password"
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter last name"
-                className={`w-full rounded-lg border ${errors.lastName ? "border-red-500" : "border-stroke"
+                placeholder="Enter your password"
+                className={`w-full rounded-lg border ${errors.password ? "border-red-500" : "border-stroke"
                   } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.lastName && (
-                <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
               )}
             </div>
+
           </div>
 
-          {/* Contact Section */}
+          {/* Contact Info */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -153,12 +151,9 @@ export default function AddCustomer() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter email address"
-                className={`w-full rounded-lg border ${errors.email ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.email ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-              )}
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
 
             <div>
@@ -172,16 +167,13 @@ export default function AddCustomer() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter phone number"
-                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
-              )}
+              {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
             </div>
           </div>
 
-          {/* Address Section */}
+          {/* Address */}
           <div>
             <label className="mb-2 block text-sm font-medium text-black dark:text-white">
               <MapPin className="inline mr-2 h-4 w-4" />
@@ -193,15 +185,12 @@ export default function AddCustomer() {
               value={formData.address}
               onChange={handleChange}
               placeholder="Enter full street address"
-              className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+              className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             />
-            {errors.address && (
-              <p className="mt-1 text-xs text-red-500">{errors.address}</p>
-            )}
+            {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
           </div>
 
-          {/* City, Postal Code & Country */}
+          {/* City, Postal, Country */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -213,12 +202,9 @@ export default function AddCustomer() {
                 value={formData.city}
                 onChange={handleChange}
                 placeholder="Enter city"
-                className={`w-full rounded-lg border ${errors.city ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.city ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.city && (
-                <p className="mt-1 text-xs text-red-500">{errors.city}</p>
-              )}
+              {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city}</p>}
             </div>
 
             <div>
@@ -231,12 +217,9 @@ export default function AddCustomer() {
                 value={formData.postalCode}
                 onChange={handleChange}
                 placeholder="Enter postal code"
-                className={`w-full rounded-lg border ${errors.postalCode ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.postalCode ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.postalCode && (
-                <p className="mt-1 text-xs text-red-500">{errors.postalCode}</p>
-              )}
+              {errors.postalCode && <p className="mt-1 text-xs text-red-500">{errors.postalCode}</p>}
             </div>
 
             <div>
@@ -250,48 +233,13 @@ export default function AddCustomer() {
                 value={formData.country}
                 onChange={handleChange}
                 placeholder="Enter country"
-                className={`w-full rounded-lg border ${errors.country ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.country ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.country && (
-                <p className="mt-1 text-xs text-red-500">{errors.country}</p>
-              )}
+              {errors.country && <p className="mt-1 text-xs text-red-500">{errors.country}</p>}
             </div>
           </div>
 
-          {/* Company Name & Registration Date */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <DollarSign className="inline mr-2 h-4 w-4" />
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                placeholder="Enter company name (optional)"
-                className="w-full rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <Calendar className="inline mr-2 h-4 w-4" />
-                Registration Date
-              </label>
-              <input
-                type="date"
-                name="registrationDate"
-                value={formData.registrationDate}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-              />
-            </div>
-          </div>
-
-          {/* Submit Button */}
+          {/* Submit */}
           <div className="pt-4">
             <button
               type="submit"

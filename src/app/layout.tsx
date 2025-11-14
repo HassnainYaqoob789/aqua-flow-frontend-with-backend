@@ -7,7 +7,7 @@ import ClientProvider from "@/components/ClientProvider";
 import ClientWrapper from "@/components/ClientWrapper";
 
 export const metadata = {
-  title: "Your App",
+  title: "Aqua Flow",
   description: "Next.js + React Query setup",
 };
 

@@ -16,7 +16,7 @@ import {
   DollarSign,
   Warehouse,
   FileText,
-  PackageSearch 
+  PackageSearch
 } from "lucide-react";
 
 interface SidebarProps {
@@ -45,9 +45,9 @@ const menuGroups = [
         route: "/order/all-orders",
       },
       {
-        icon: <PackageSearch  className="h-5 w-5" />,
+        icon: <PackageSearch className="h-5 w-5" />,
         label: "All Products",
-        route: "/products",
+        route: "/products/all-products",
       },
     ],
   },
@@ -61,13 +61,18 @@ const menuGroups = [
       },
       {
         icon: <Truck className="h-5 w-5" />,
-        label: "Drivers & Routes",
+        label: "All Drivers",
         route: "/driver/all-driver-routes",
       },
       {
         icon: <Truck className="h-5 w-5" />,
         label: "Delivery Operations",
         route: "/delivery-operations",
+      },
+      {
+        icon: <Truck className="h-5 w-5" />,
+        label: "Zone",
+        route: "/zone/all-zone",
       },
     ],
   },
@@ -105,9 +110,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
-        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* SIDEBAR HEADER */}
         <div

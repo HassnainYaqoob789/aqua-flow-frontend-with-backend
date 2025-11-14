@@ -1,43 +1,53 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
 export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
-    const userData = true; // Hard-coded false for testing (change to true to test logged-in case)
-    console.error("Middleware triggered - Path:", pathname, "User Data:", userData); // Debug log
-    if (userData) {
-        // Simulate user logged in
-        if (pathname === "/signin" || pathname === "/signup") {
-            console.error("Redirecting to / because user is logged in");
-            return NextResponse.redirect(new URL("/", request.url));
-        }
-    } else {
-        // Simulate user not logged in
-        if (pathname !== "/signin" && pathname !== "/signup") {
-            console.error("Redirecting to /signin because user is not logged in");
-            return NextResponse.redirect(new URL("/signin", request.url));
-        }
+  const { pathname } = request.nextUrl;
+
+  // Read token from cookies
+  const token = request.cookies.get("token")?.value;
+
+  console.log(
+    "Middleware triggered - Path:",
+    pathname,
+    "Token:",
+    token ? "✅ Present" : "❌ Missing"
+  );
+
+  console.log("token",token)
+
+  // If token exists (user logged in)
+  if (token) {
+    // Prevent logged-in users from accessing login page
+    if (pathname === "/auth/login") {
+      console.log("Redirecting to / because user is already logged in");
+      return NextResponse.redirect(new URL("/", request.url));
     }
-    console.error("Allowing request to proceed");
-    return NextResponse.next();
+  } else {
+    // If no token (user not logged in), block protected routes
+    if (pathname !== "/auth/login") {
+      console.log("Redirecting to /auth/login because user is not logged in");
+      return NextResponse.redirect(new URL("/auth/login", request.url));
+    }
+  }
+
+  return NextResponse.next();
 }
+
+// Add all your protected routes here
 export const config = {
-    matcher: [
-        "/",
-        "/profile",
-        "/signin",
-        "/signup",
-        "/calendar",
-        "/form-elements",
-        "/basic-tables",
-        "/blank",
-        "/error-404",
-        "/line-chart",
-        "/bar-chart",
-        "/alerts",
-        "/avatars",
-        "/badge",
-        "/buttons",
-        "/images",
-        "/videos",
-    ],
+  matcher: [
+    "/", 
+    "/profile",
+    "/customer/:path*",
+    "/driver/:path*",
+    "/expenses/:path*",
+    "/inventory/:path*",
+    "/order/:path*",
+    "/products/:path*",
+    "/reports/:path*",
+    "/settings/:path*",
+    "/tables/:path*",
+    "/ui/:path*",
+  ],
 };

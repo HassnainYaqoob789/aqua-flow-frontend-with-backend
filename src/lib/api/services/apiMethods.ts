@@ -19,3 +19,9 @@ export const apiDelete = async <T>(url: string): Promise<T> => {
   const { data } = await apiClient.delete<T>(url);
   return data;
 };
+
+
+export const apiPatch = async <T>(url: string, body?: any): Promise<T> => {
+  const { data } = await apiClient.patch<T>(url, body);
+  return data;
+};

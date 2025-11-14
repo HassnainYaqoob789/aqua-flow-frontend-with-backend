@@ -120,7 +120,7 @@ export default function AddDriver() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* ID & Name Section */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
+            {/* <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                 <Truck className="inline mr-2 h-4 w-4" />
                 Driver ID *
@@ -136,7 +136,7 @@ export default function AddDriver() {
                 } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.id && <p className="mt-1 text-xs text-red-500">{errors.id}</p>}
-            </div>
+            </div> */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -224,7 +224,7 @@ export default function AddDriver() {
               {errors.vehicle && <p className="mt-1 text-xs text-red-500">{errors.vehicle}</p>}
             </div>
 
-            <div>
+            {/* <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                 <Wifi className="inline mr-2 h-4 w-4" />
                 Status *
@@ -244,11 +244,11 @@ export default function AddDriver() {
                 ))}
               </select>
               {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-            </div>
+            </div> */}
           </div>
 
           {/* Mode Section */}
-          <div>
+          {/* <div>
             <label className="mb-2 block text-sm font-medium text-black dark:text-white">
               <Wifi className="inline mr-2 h-4 w-4" />
               Mode *
@@ -268,7 +268,7 @@ export default function AddDriver() {
               ))}
             </select>
             {errors.mode && <p className="mt-1 text-xs text-red-500">{errors.mode}</p>}
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <div className="pt-4">
