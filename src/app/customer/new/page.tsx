@@ -49,36 +49,37 @@ export default function AddCustomer() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    // Call the API using your mutation
-    createCustomerMutation.mutate(
-      {
-        ...formData,
+  createCustomerMutation.mutate(
+    {
+      ...formData,
+    },
+    {
+      onSuccess: () => {
+        // ✅ Removed alert
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          address: "",
+          city: "",
+          postalCode: "",
+          country: "",
+          password: "",
+        });
       },
-      {
-        onSuccess: () => {
-          alert("Customer added successfully!");
-          // Reset form
-          setFormData({
-            name: "",
-            email: "",
-            phone: "",
-            address: "",
-            city: "",
-            postalCode: "",
-            country: "",
-          });
-        },
-        onError: (err: any) => {
-          alert(`Failed to add customer: ${err.response?.data?.message || err.message}`);
-        },
-      }
-    );
-  };
+      onError: (err: any) => {
+        alert(`Failed to add customer: ${err.response?.data?.message || err.message}`);
+      },
+    }
+  );
+};
+
 
   return (
     <DefaultLayout>

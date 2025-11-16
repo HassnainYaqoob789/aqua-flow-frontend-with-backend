@@ -16,14 +16,45 @@ export interface LoginResponse {
 }
 
 
+// src/lib/types/customer.ts
 export interface Customer {
   id: string;
   name: string;
-  email: string;
-  phone?: string;
-  password?: string;
-  [key: string]: any;
-} 
+  email?: string | null;
+  phone: string;
+  address: string;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  status: "active" | "inactive" | "sleeping" | "overdue"; 
+  createdAt: string;
+}
+
+export interface CustomerCounts {
+  totalCustomers: number;
+  activeCustomers: number;
+  inactiveCustomers: number;
+}
+
+export interface CustomerPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CustomerListResponse {
+  customers: Customer[];
+  counts: CustomerCounts;
+  pagination: CustomerPagination;
+}
+
+export interface StatusPayload  {
+  id: string;
+  status: Customer["status"];
+};
+
+
 
 
 

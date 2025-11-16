@@ -9,6 +9,7 @@ import { addProducts,setProducts} from "../store/useProduct";
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
+import { Customer, StatusPayload } from "../types/auth";
 
 export const useLogin = () => {
   const router = useRouter();
@@ -40,7 +41,7 @@ export const useUpdateCustomer = createMutationFactory(
 );
 
 
-export const useStatusCustomer = createMutationFactory(
+export const useStatusCustomer = createMutationFactory<Customer, StatusPayload>(
   "customers",
   statusCustomer,
   (data) => status_Customer(data)

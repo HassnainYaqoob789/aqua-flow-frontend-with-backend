@@ -5,7 +5,7 @@ import {
   Filter,
   Plus,
   MoreVertical,
-  Eye,
+  Edit,
   AlertCircle,
   Send,
   Download,
@@ -14,8 +14,9 @@ import {
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
-import { useCustomers,useStatusCustomer } from "@/lib/api/servicesHooks";
+import { useCustomers, useStatusCustomer } from "@/lib/api/servicesHooks";
 import { Customer } from "@/lib/types/auth";
+import { DataTable } from "@/components/Tables/DataTable";
 
 export default function CustomerManagement() {
   const { data: dataaa, isLoading, isError } = useCustomers();
@@ -25,12 +26,30 @@ export default function CustomerManagement() {
   const customers = dataaa?.customers || [];
 
   const [activeTab, setActiveTab] = useState("All");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const handleStatusChange = (
+    customerId: string,
+    status: Customer["status"],
+  ) => {
+    console.log("Status changed to:", status);
 
+    updateStatus(
+      { id: customerId, status },
+      {
+        onSuccess: () => {
+          setOpenId(null);
+        },
+      },
+    );
+  };
 
-const handleStatusToggle = (customerId: string) => {
-  updateStatus(customerId);
-};
+  const handleStatusToggle = (customer: Customer) => {
+    const nextStatus = customer.status === "active" ? "inactive" : "active";
+
+    updateStatus({ id: customer.id, status: nextStatus });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -38,49 +57,51 @@ const handleStatusToggle = (customerId: string) => {
         return "bg-green-50 text-green-700 border border-green-200";
       case "sleeping":
         return "bg-orange-50 text-orange-700 border border-orange-200";
-      case "overdue":
+      case "inactive":
         return "bg-red-50 text-red-700 border border-red-200";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
 
-  const totalCustomers = customers.length;
-  const activeCustomers = customers.filter((c) => c.status === "active").length;
-  const sleepingCustomers = customers.filter(
-    (c) => c.status === "sleeping",
-  ).length;
-
   const stats = [
-    { label: "Total Customers", value: totalCustomers.toString() },
+    { 
+      label: "Total Customers", 
+      value: dataaa?.counts?.totalCustomers?.toString() || "0"
+    },
     {
       label: "Active",
-      value: activeCustomers.toString(),
+      value: dataaa?.counts?.activeCustomers?.toString() || "0",
       color: "text-green-600",
     },
     {
-      label: "Sleeping",
-      value: sleepingCustomers.toString(),
-      color: "text-orange-500",
+      label: "Inactive",
+      value: dataaa?.counts?.inactiveCustomers?.toString() || "0",
+      color: "text-red-600",
     },
   ];
 
   const tabs = [
-    `All Customers (${totalCustomers})`,
-    `Active (${activeCustomers})`,
-    `Sleeping (${sleepingCustomers})`,
+    `All Customers (${dataaa?.counts?.totalCustomers || 0})`,
+    `Active (${dataaa?.counts?.activeCustomers || 0})`,
+    `Inactive (${dataaa?.counts?.inactiveCustomers || 0})`,
   ];
 
   const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch = 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.includes(searchTerm);
+
     switch (activeTab) {
       case "All":
-        return true;
+        return matchesSearch;
       case "Active":
-        return customer.status === "active";
-      case "Sleeping":
-        return customer.status === "sleeping";
+        return customer.status === "active" && matchesSearch;
+      case "Inactive":
+        return customer.status === "inactive" && matchesSearch;
       default:
-        return true;
+        return matchesSearch;
     }
   });
 
@@ -96,7 +117,7 @@ const handleStatusToggle = (customerId: string) => {
         <div className="border-b border-gray-200 bg-white px-3 py-4 dark:border-gray-700 dark:bg-gray-800 sm:px-6 sm:py-8">
           <div className="flex justify-end">
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-              <Link href="/customer/add-customer" className="sm:ml-auto">
+              <Link href="/customer/new" className="sm:ml-auto">
                 <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto">
                   <Plus size={20} />
                   Add Customer
@@ -117,6 +138,8 @@ const handleStatusToggle = (customerId: string) => {
               <input
                 type="text"
                 placeholder="Search by name, email, phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-xs outline-none placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-blue-400 sm:text-sm"
               />
             </div>
@@ -151,10 +174,11 @@ const handleStatusToggle = (customerId: string) => {
               <button
                 key={idx}
                 onClick={() => setActiveTab(tab.split(" ")[0])}
-                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === tab.split(" ")[0]
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                  }`}
+                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
+                  activeTab === tab.split(" ")[0]
+                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                }`}
               >
                 {tab}
               </button>
@@ -275,20 +299,61 @@ const handleStatusToggle = (customerId: string) => {
                           </span>
                         </td>
                         <td className="px-3 py-3 sm:px-6 sm:py-4">
-                          <div className="flex items-center justify-center gap-1 sm:gap-2">
-                            <button
-                              onClick={() => handleStatusToggle(customer.id)}
-                              disabled={isPending}
-                              className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 disabled:opacity-50"
-                            >
-                              <Eye size={16} className="sm:size-[18px]" />
-                            </button>
-                            <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                              <MoreVertical
-                                size={16}
-                                className="sm:size-[18px]"
-                              />
-                            </button>
+                          <div className="relative flex items-center justify-center gap-1 sm:gap-2">
+                            <Link href={`/customer/${customer.id}`}>
+                              <button
+                                className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
+                              >
+                                <Edit size={16} className="sm:size-[18px]" />
+                              </button>
+                            </Link>
+
+                            {/* Dropdown Button */}
+                            <div className="relative">
+                              <button
+                                onClick={() =>
+                                  setOpenId(
+                                    openId === customer.id ? null : customer.id,
+                                  )
+                                }
+                                className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                              >
+                                <MoreVertical
+                                  size={16}
+                                  className="sm:size-[18px]"
+                                />
+                              </button>
+
+                              {/* Dropdown Menu - Shows opposite status */}
+                              {openId === customer.id && (
+                                <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                                  {customer.status === "active" ? (
+                                    <button
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          customer.id,
+                                          "inactive",
+                                        )
+                                      }
+                                      disabled={isPending}
+                                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                                    >
+                                      ✗ Deactivate
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        handleStatusChange(customer.id, "active")
+                                      }
+                                      disabled={isPending}
+                                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-green-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-green-900/30"
+                                    >
+                                      ✓ Activate
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -298,11 +363,11 @@ const handleStatusToggle = (customerId: string) => {
               </table>
 
               {/* Empty State */}
-              {customers.length === 0 && (
+              {filteredCustomers.length === 0 && (
                 <div className="p-8 text-center">
                   <Users className="mx-auto mb-3 h-12 w-12 text-gray-400" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    No customers found
+                    {searchTerm ? "No customers found matching your search" : "No customers found"}
                   </p>
                 </div>
               )}
@@ -310,33 +375,27 @@ const handleStatusToggle = (customerId: string) => {
           )}
         </div>
 
-        {/* Alert Banner - Shows when Sleeping tab is active */}
-        {activeTab === "Sleeping" && filteredCustomers.length > 0 && (
-          <div className="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20 sm:p-6">
+        {/* Alert Banner - Shows when Inactive tab is active */}
+        {activeTab === "Inactive" && filteredCustomers.length > 0 && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20 sm:p-6">
             <div className="flex gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-600 dark:text-orange-500" />
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-500" />
               <div className="flex-1">
-                <h3 className="mb-1 font-semibold text-orange-900 dark:text-orange-100">
-                  Sleeping Customers Detected
+                <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
+                  Inactive Customers Detected
                 </h3>
-                <p className="mb-4 text-sm text-orange-800 dark:text-orange-200">
+                <p className="mb-4 text-sm text-red-800 dark:text-red-200">
                   {filteredCustomers.length} customer
-                  {filteredCustomers.length !== 1 ? "s" : ""} haven't placed
-                  orders in 15+ days. Re-engage them with promotional offers or
-                  follow-up calls to boost retention.
+                  {filteredCustomers.length !== 1 ? "s" : ""} {filteredCustomers.length !== 1 ? "are" : "is"} currently inactive. Reactivate them to resume orders and services.
                 </p>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <button className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-700">
+                  <button className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700">
                     <Send size={16} />
-                    Send Bulk Re-engagement SMS
+                    Send Activation SMS
                   </button>
-                  <button className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 dark:border-orange-800 dark:bg-gray-800 dark:text-orange-400 dark:hover:bg-gray-700">
+                  <button className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-gray-700">
                     <Download size={16} />
                     Export List
-                  </button>
-                  <button className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 dark:border-orange-800 dark:bg-gray-800 dark:text-orange-400 dark:hover:bg-gray-700">
-                    <Users size={16} />
-                    Assign to Recovery Team
                   </button>
                 </div>
               </div>

@@ -1,43 +1,57 @@
-import { CUSTOMER_CREATE_URL, CUSTOMER_GET_URL, CUSTOMER_PATCH_URL, CUSTOMER_PUT_URL, LOGIN_URL, ZONE_CREATE_URL, ZONE_GET_URL, PRODUCTS_CREATE_URL, PRODUCTS_GET_URL } from "./services/endpoints";
-import apiClient from "./services/apiClient";
-import { Customer, LoginResponse, LoginRequest, Zone, Product, ProductResponse } from "@/lib/types/auth";
+// apiFactory.ts
+
+import {
+  Customer,
+  CustomerListResponse,
+  Zone,
+  Product,
+  ProductResponse,
+  LoginRequest,
+  LoginResponse,
+  StatusPayload,
+} from "@/lib/types/auth";
 import { apiGet, apiPatch, apiPost, apiPut } from "./services/apiMethods";
-
-
-
-
-
+import {
+  CUSTOMER_CREATE_URL,
+  CUSTOMER_GET_URL,
+  CUSTOMER_PATCH_URL,
+  CUSTOMER_PUT_URL,
+  LOGIN_URL,
+  ZONE_CREATE_URL,
+  ZONE_GET_URL,
+  PRODUCTS_CREATE_URL,
+  PRODUCTS_GET_URL,
+} from "./services/endpoints";
 
 export const loginUser = (payload: LoginRequest) =>
   apiPost<LoginResponse>(LOGIN_URL, payload);
 
-
 // =========================CUSTOMER APIS=========================
 
-export const getCustomers = async (): Promise<Customer[]> => {
-  return await apiGet<Customer[]>(CUSTOMER_GET_URL);
+// Return full list response
+export const getCustomers = async (): Promise<CustomerListResponse> => {
+  return await apiGet<CustomerListResponse>(CUSTOMER_GET_URL);
 };
 
 export const createCustomer = async (
-  body: Partial<Customer>
+  body: Partial<Customer> & { password?: string } // if backend accepts password
 ): Promise<Customer> => {
   return await apiPost<Customer>(CUSTOMER_CREATE_URL, body);
 };
 
-
-
-
 export const updateCustomer = async (
-  body: Partial<Customer>
+  payload: Partial<Customer> & { id: string }
 ): Promise<Customer> => {
-  return await apiPut<Customer>(CUSTOMER_PUT_URL, body);
+  const { id, ...rest } = payload;
+  return await apiPut<Customer>(`${CUSTOMER_PUT_URL}/${id}`, rest);
 };
 
 
 export const statusCustomer = async (
-  body: Partial<Customer>
+  payload: StatusPayload
 ): Promise<Customer> => {
-  return await apiPatch<Customer>(CUSTOMER_PATCH_URL, body);
+  const { id, status } = payload;
+  return await apiPatch<Customer>(`${CUSTOMER_PATCH_URL}/${id}`, { status });
 };
 // =========================CUSTOMER APIS END=========================
 
