@@ -1,11 +1,11 @@
 // src/lib/config.ts
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
-export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
+// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
 
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/api";
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://alisonstech-dev.com/backend/api";
-
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://alisonstech-dev.com/backend/api";
+export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://alisonstech-dev.com/backend";
 
 
 export const LOGIN_URL = `${BASE_URL}/auth/login`;
