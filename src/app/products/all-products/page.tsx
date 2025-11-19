@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Edit2, Trash2, Loader2, AlertCircle, Droplets, Coffee, MoreVertical } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import { IMG_URL } from "@/lib/api/services/endpoints";
 import { useProducts } from "@/lib/api/servicesHooks";
 
 interface Product {
@@ -19,7 +20,6 @@ interface Product {
   user?: { name: string };
 }
 
-const BASE_IMAGE_URL = "http://192.168.18.107:7000";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -196,7 +196,7 @@ export default function ProductsPage() {
                   <td className="hidden sm:table-cell px-3 py-3 text-center sm:px-6 sm:py-4">
                     {product.image && (
                       <img
-                        src={`${BASE_IMAGE_URL}${product.image}`}
+                        src={`${IMG_URL}${product.image}`}
                         alt={`${product.name} image`}
                         className="h-16 w-16 rounded object-contain"
                       />
