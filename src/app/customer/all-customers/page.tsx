@@ -65,8 +65,8 @@ export default function CustomerManagement() {
   };
 
   const stats = [
-    { 
-      label: "Total Customers", 
+    {
+      label: "Total Customers",
       value: dataaa?.counts?.totalCustomers?.toString() || "0"
     },
     {
@@ -87,23 +87,23 @@ export default function CustomerManagement() {
     `Inactive (${dataaa?.counts?.inactiveCustomers || 0})`,
   ];
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm);
+const normalize = (str: string | null | undefined): string => 
+  str?.toLowerCase() ?? "";
 
-    switch (activeTab) {
-      case "All":
-        return matchesSearch;
-      case "Active":
-        return customer.status === "active" && matchesSearch;
-      case "Inactive":
-        return customer.status === "inactive" && matchesSearch;
-      default:
-        return matchesSearch;
-    }
-  });
+const filteredCustomers = customers.filter((customer) => {
+  const searchLower = searchTerm.toLowerCase();
+
+  const matchesSearch =
+    customer.name.toLowerCase().includes(searchLower) ||
+    normalize(customer.email).includes(searchLower) ||
+    customer.phone.includes(searchTerm); // or .toLowerCase() if phone has letters
+
+  return matchesSearch && (
+    activeTab === "All" ||
+    (activeTab === "Active" && customer.status === "active") ||
+    (activeTab === "Inactive" && customer.status === "inactive")
+  );
+});
 
   return (
     <DefaultLayout>
@@ -174,11 +174,10 @@ export default function CustomerManagement() {
               <button
                 key={idx}
                 onClick={() => setActiveTab(tab.split(" ")[0])}
-                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
-                  activeTab === tab.split(" ")[0]
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                }`}
+                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === tab.split(" ")[0]
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  }`}
               >
                 {tab}
               </button>
@@ -221,8 +220,15 @@ export default function CustomerManagement() {
                     <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
                       Contact & Location
                     </th>
+
                     <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm lg:table-cell">
-                      Joined Date
+                      Last Order
+                    </th>
+                    <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm xl:table-cell">
+                      Financial
+                    </th>
+                    <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm xl:table-cell">
+                      Bottles & Empties
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                       Status
@@ -234,13 +240,13 @@ export default function CustomerManagement() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredCustomers.map((customer) => {
-                    const createdDate = new Date(
-                      customer.createdAt,
-                    ).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    });
+                    const lastOrderDate = customer.lastOrderDate
+                      ? new Date(customer.lastOrderDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                      : "Yet to order";
 
                     return (
                       <tr
@@ -263,7 +269,19 @@ export default function CustomerManagement() {
                                 📍 {customer.address}, {customer.city}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">
-                                Joined: {createdDate}
+                                Total Spent: PKR{(customer.totalSpent ?? 0).toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                Due: PKR{(customer.dueAmount ?? 0).toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                Deposit: PKR{(customer.securityDeposit ?? 0).toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                Bottles: {customer.bottlesGiven ?? 0}, Empties: {customer.empties ?? 0}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                Last Order: {lastOrderDate}
                               </p>
                             </div>
                           </div>
@@ -287,7 +305,30 @@ export default function CustomerManagement() {
                         <td className="hidden px-3 py-3 sm:px-6 sm:py-4 lg:table-cell">
                           <div className="text-xs sm:text-sm">
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {createdDate}
+                              {lastOrderDate}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="hidden px-3 py-3 sm:px-6 sm:py-4 xl:table-cell">
+                          <div className="text-xs sm:text-sm">
+                            <p className="text-gray-900 dark:text-white">
+                              Total: {(customer.totalSpent ?? 0).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-red-600 dark:text-red-400">
+                              Due: {(customer.dueAmount ?? 0).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Deposit: {(customer.securityDeposit ?? 0).toLocaleString()}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="hidden px-3 py-3 sm:px-6 sm:py-4 xl:table-cell">
+                          <div className="text-xs sm:text-sm">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              Bottles: {customer.bottlesGiven}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Empties: {customer.empties}
                             </p>
                           </div>
                         </td>

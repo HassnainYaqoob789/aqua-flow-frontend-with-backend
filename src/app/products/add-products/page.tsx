@@ -79,7 +79,10 @@ export default function ProductFormPage() {
     };
 
     const onSuccess = () => {
-        // router.push("/products");
+
+        setTimeout(() => {
+            router.push("/products/all-products");
+        }, 1000);
     };
 
     const handleSubmit = (e: React.FormEvent) => {

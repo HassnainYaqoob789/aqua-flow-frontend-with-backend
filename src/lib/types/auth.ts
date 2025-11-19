@@ -1,3 +1,6 @@
+// ==========================
+// AUTH
+// ==========================
 export interface LoginRequest {
   email: string;
   password: string;
@@ -15,8 +18,9 @@ export interface LoginResponse {
   };
 }
 
-
-// src/lib/types/customer.ts
+// ==========================
+// CUSTOMER
+// ==========================
 export interface Customer {
   id: string;
   name: string;
@@ -26,8 +30,21 @@ export interface Customer {
   city?: string | null;
   postalCode?: string | null;
   country?: string | null;
-  status: "active" | "inactive" | "sleeping" | "overdue"; 
+  zoneId?: string | null;
+  status: "active" | "inactive" | "sleeping" | "overdue";
   createdAt: string;
+
+zone?: {
+    id: string;
+    name: string;
+  } | null;
+
+  lastOrderDate?: string | null;
+  empties?: number;
+  bottlesGiven?: number;
+  totalSpent?: number;
+  dueAmount?: number;
+  securityDeposit?: number;
 }
 
 export interface CustomerCounts {
@@ -49,19 +66,18 @@ export interface CustomerListResponse {
   pagination: CustomerPagination;
 }
 
-export interface StatusPayload  {
+export interface StatusPayload {
   id: string;
   status: Customer["status"];
-};
+}
 
-
-
-
-
+// ==========================
+// ZONES
+// ==========================
 export interface Zone {
   id: string;
   name: string;
-  description: string;  
+  description: string;
   status: "active" | "inactive";
   createdAt: string;
 }
@@ -76,8 +92,9 @@ export interface ZoneResponse {
   };
 }
 
-
-
+// ==========================
+// PRODUCTS
+// ==========================
 export interface Product {
   id: string;
   name: string;
@@ -97,4 +114,120 @@ export interface ProductResponse {
     total: number;
     totalPages: number;
   };
+}
+
+// ==========================
+// DRIVERS
+// ==========================
+export interface Driver {
+  id: string;
+  name: string;
+  contact: string;
+  vehicleId: string;
+  zoneId?: string | null;
+  status: "active" | "inactive";
+  createdAt: string;
+
+  rating?: number | null;          // average rating (e.g. 4.8)
+  totalTrips?: number | null;
+}
+
+export interface DriverResponse {
+  drivers: Driver[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// ==========================
+// ORDERS
+// ==========================
+export interface orderItems {
+  productId: string;
+  quantity: number;
+}
+
+export interface CreateOrderPayload {
+  customerId: string;
+  driverId: string;
+  deliveryDate: string; // ISO string
+  items: orderItems[];
+paymentMethod?: "cash_on_delivery";
+}
+
+// Response types for Get Orders
+export interface OrderItemProduct {
+  name: string;
+  size: string;
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  product: OrderItemProduct;
+}
+
+export interface CustomerInfo {
+  name: string;
+  phone: string;
+}
+
+export interface DriverInfo {
+  name: string;
+  vehicleId: string;
+}
+
+export interface ZoneInfo {
+  name: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: number;
+  orderNumberDisplay: string;
+  customerId: string;
+  driverId: string;
+  zoneId: string;
+  deliveryDate: string; // ISO
+  deliveryAddress: string;
+  totalAmount: number;
+  paymentMethod: "cash_on_delivery";
+  status: "pending" | "in_progress" | "delivered" | "cancelled";
+  tenantId: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+
+  customer: CustomerInfo;
+  driver: DriverInfo;
+  zone: ZoneInfo;
+  items: OrderItem[];
+}
+
+export interface OrderStats {
+  totalOrders: number;
+  pending: number;
+  in_progress: number;
+  delivered: number;
+  cancelled: number;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface GetOrdersResponse {
+  orders: Order[];
+  stats: OrderStats;
+  pagination: PaginationInfo;
 }

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, FormEvent, useEffect } from "react";
 import { ArrowLeft, Mail, Phone, MapPin, User, Globe, Save } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -8,8 +7,11 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useCreateCustomer, useUpdateCustomer } from "@/lib/api/servicesHooks";
 // import { useCustomerStore } from "@/lib/store/useCustomerStore"; // if you want to prefill from store
 // import type { Customer } from "@/lib/types/customer";
+import { useRouter } from "next/navigation";
 
 export default function CustomerFormPage() {
+  const router = useRouter();
+
   const params = useParams();
   const id = params?.id as string; // "new" or actual customer id
 
@@ -90,66 +92,36 @@ export default function CustomerFormPage() {
 
     if (!validateForm()) return;
 
-    if (isCreateMode) {
-      // CREATE FLOW
-      createCustomerMutation.mutate(
-        {
-          ...formData,
+    updateCustomerMutation.mutate(
+      {
+        id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+      },
+      {
+        onSuccess: () => {
+          console.log("Customer updated successfully!");
+
+          setTimeout(() => {
+            router.push("/customer/all-customers");
+          }, 1000);
         },
-        {
-          onSuccess: () => {
-            // Reset form
-            setFormData({
-              name: "",
-              email: "",
-              phone: "",
-              address: "",
-              city: "",
-              postalCode: "",
-              country: "",
-              password: "",
-            });
-          },
-          onError: (err: any) => {
-            alert(
-              `Failed to add customer: ${
-                err?.response?.data?.message || err?.message || "Unknown error"
-              }`
-            );
-          },
-        }
-      );
-    } else {
-      // UPDATE FLOW
-      // We call updateCustomer with id and fields (no password by default)
-      updateCustomerMutation.mutate(
-        {
-          id,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          // status can be passed here if you're editing it in this form
+
+        onError: (err: any) => {
+          alert(
+            `Failed to update customer: ${err?.response?.data?.message || err?.message || "Unknown error"
+            }`
+          );
         },
-        {
-          onSuccess: () => {
-            // You can redirect or show toast here
-            // e.g. router.push("/customers");
-          },
-          onError: (err: any) => {
-            alert(
-              `Failed to update customer: ${
-                err?.response?.data?.message || err?.message || "Unknown error"
-              }`
-            );
-          },
-        }
-      );
-    }
+      }
+    );
   };
+
 
   return (
     <DefaultLayout>
@@ -187,9 +159,8 @@ export default function CustomerFormPage() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter first name"
-                className={`w-full rounded-lg border ${
-                  errors.name ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.name ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
@@ -207,9 +178,8 @@ export default function CustomerFormPage() {
                 placeholder={
                   isCreateMode ? "Enter your password" : "Leave blank to keep unchanged"
                 }
-                className={`w-full rounded-lg border ${
-                  errors.password ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.password ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-500">{errors.password}</p>
@@ -230,9 +200,8 @@ export default function CustomerFormPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter email address"
-                className={`w-full rounded-lg border ${
-                  errors.email ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.email ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
@@ -248,9 +217,8 @@ export default function CustomerFormPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter phone number"
-                className={`w-full rounded-lg border ${
-                  errors.phone ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
             </div>
@@ -268,9 +236,8 @@ export default function CustomerFormPage() {
               value={formData.address}
               onChange={handleChange}
               placeholder="Enter full street address"
-              className={`w-full rounded-lg border ${
-                errors.address ? "border-red-500" : "border-stroke"
-              } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+              className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             />
             {errors.address && (
               <p className="mt-1 text-xs text-red-500">{errors.address}</p>
@@ -289,9 +256,8 @@ export default function CustomerFormPage() {
                 value={formData.city}
                 onChange={handleChange}
                 placeholder="Enter city"
-                className={`w-full rounded-lg border ${
-                  errors.city ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.city ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city}</p>}
             </div>
@@ -306,9 +272,8 @@ export default function CustomerFormPage() {
                 value={formData.postalCode}
                 onChange={handleChange}
                 placeholder="Enter postal code"
-                className={`w-full rounded-lg border ${
-                  errors.postalCode ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.postalCode ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.postalCode && (
                 <p className="mt-1 text-xs text-red-500">{errors.postalCode}</p>
@@ -326,9 +291,8 @@ export default function CustomerFormPage() {
                 value={formData.country}
                 onChange={handleChange}
                 placeholder="Enter country"
-                className={`w-full rounded-lg border ${
-                  errors.country ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.country ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.country && (
                 <p className="mt-1 text-xs text-red-500">{errors.country}</p>

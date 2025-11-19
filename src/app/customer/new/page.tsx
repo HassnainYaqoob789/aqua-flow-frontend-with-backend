@@ -1,13 +1,32 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { ArrowLeft, Mail, Phone, MapPin, User, Globe, Save } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useCreateCustomer } from "@/lib/api/servicesHooks";
-
+import { useZoneStore } from "@/lib/store/useZoneStore";
+import { useZone } from "@/lib/api/servicesHooks";
+import { Zone } from "@/lib/types/auth";
+import { useRouter } from "next/navigation";
 export default function AddCustomer() {
+  const router = useRouter();
+
   const createCustomerMutation = useCreateCustomer();
+
+  const { data: dataaa, isLoading, isError } = useZone();
+  const zones = useZoneStore((s) => s.state.zone) || [];
+
+  const setZones = (zonesArray: Zone[]) =>
+    useZoneStore.getState().setState({ zone: zonesArray });
+
+  console.log("Zones data:", dataaa);
+
+    useEffect(() => {
+    if (dataaa?.zones) {
+      useZoneStore.getState().setState({ zone: dataaa.zones });
+    }
+  }, [dataaa]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,12 +36,12 @@ export default function AddCustomer() {
     city: "",
     postalCode: "",
     country: "",
-    password: "",
+    zoneId: "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -32,54 +51,52 @@ export default function AddCustomer() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) newErrors.name = "First name is required";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Valid email is required";
-    if (!formData.phone.trim()) newErrors.phone = "phone number is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.zoneId.trim()) newErrors.zoneId = "Zone is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
     if (!formData.country.trim()) newErrors.country = "Country is required";
-    if (!formData.password?.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  createCustomerMutation.mutate(
-    {
-      ...formData,
-    },
-    {
-      onSuccess: () => {
-        // ✅ Removed alert
-        // Reset form
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          address: "",
-          city: "",
-          postalCode: "",
-          country: "",
-          password: "",
-        });
+    createCustomerMutation.mutate(
+      {
+        ...formData,
       },
-      onError: (err: any) => {
-        alert(`Failed to add customer: ${err.response?.data?.message || err.message}`);
-      },
-    }
-  );
-};
+      {
+        onSuccess: () => {
 
+          setTimeout(() => {
+            router.push("/customer/all-customers");
+          }, 1000);
+
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            address: "",
+            city: "",
+            postalCode: "",
+            country: "",
+            zoneId: "",
+          });
+        },
+        onError: (err: any) => {
+          alert(`Failed to add customer: ${err.response?.data?.message || err.message}`);
+        },
+      }
+    );
+  };
 
   return (
     <DefaultLayout>
@@ -112,31 +129,11 @@ const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Enter first name"
+                placeholder="Enter name"
                 className={`w-full rounded-lg border ${errors.name ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <User className="inline mr-2 h-4 w-4" />
-                Password *
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className={`w-full rounded-lg border ${errors.password ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-              />
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
-              )}
-            </div>
-
           </div>
 
           {/* Contact Info */}
@@ -189,6 +186,33 @@ const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
               className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             />
             {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+              <MapPin className="inline mr-2 h-4 w-4" />
+              Zone *
+            </label>
+            {isLoading ? (
+              <p className="text-sm text-gray-500">Loading zones...</p>
+            ) : isError ? (
+              <p className="text-sm text-red-500">Failed to load zones</p>
+            ) : (
+              <select
+                name="zoneId"
+                value={formData.zoneId}
+                onChange={handleChange}
+                className={`w-full rounded-lg border ${errors.zoneId ? "border-red-500" : "border-stroke"} py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+              >
+                <option value="">Select Zone</option>
+                {zones.length > 0 &&
+                  zones.map((zone: Zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name}
+                    </option>
+                  ))}
+              </select>
+            )}
+            {errors.zoneId && <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>}
           </div>
 
           {/* City, Postal, Country */}
@@ -244,7 +268,8 @@ const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
           <div className="pt-4">
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500"
+              disabled={createCustomerMutation.isPending}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500"
             >
               <Save size={20} />
               Add Customer

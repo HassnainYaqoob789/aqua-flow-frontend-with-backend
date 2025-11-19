@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, AlertCircle, Droplets, Coffee, MoreVertical } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useProducts } from "@/lib/api/servicesHooks";
@@ -19,21 +19,23 @@ interface Product {
   user?: { name: string };
 }
 
-// Fallback products (only if API fails and no local data)
-const INITIAL_PRODUCTS: Product[] = [
-  { id: "1", name: "Water Bottle", size: "19L", category: "water", price: 5.99 },
-  { id: "2", name: "Water Bottle", size: "10L", category: "water", price: 3.49 },
-  { id: "3", name: "Water Bottle", size: "5L", category: "water", price: 2.49 },
-  { id: "4", name: "Water Bottle", size: "1.5L", category: "water", price: 1.49 },
-  { id: "5", name: "Water Bottle", size: "500ml (Pack of 6)", category: "water", price: 2.99 },
-  { id: "6", name: "Milk Bottle", size: "1L", category: "milk", price: 2.99 },
-  { id: "7", name: "Milk Bottle", size: "2L", category: "milk", price: 4.99 },
-  { id: "8", name: "Milk Bottle", size: "500ml (Pack of 6)", category: "milk", price: 3.99 },
-];
+const BASE_IMAGE_URL = "http://192.168.18.107:7000";
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "active":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+    case "inactive":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+  }
+};
 
 export default function ProductsPage() {
   const { data: apiResponse, isLoading, isError } = useProducts();
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   // Load custom products from localStorage on mount
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function ProductsPage() {
       }
     });
 
-    return merged.length > 0 ? merged : INITIAL_PRODUCTS;
+    return merged;
   }, [apiResponse, localProducts]);
 
   const handleDelete = (id: string) => {
@@ -102,20 +104,6 @@ export default function ProductsPage() {
     );
   }
 
-  // Error state (fallback to local/initial)
-  if (isError) {
-    return (
-      <DefaultLayout>
-        <Breadcrumb pageName="Manage Products" />
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-3" />
-          <p className="text-lg text-red-600">Failed to load products from server.</p>
-          <p className="text-sm text-gray-500 mt-1">Showing offline/local data.</p>
-        </div>
-      </DefaultLayout>
-    );
-  }
-
   return (
     <DefaultLayout>
       <Breadcrumb
@@ -124,102 +112,168 @@ export default function ProductsPage() {
       />
 
       {/* Add Button */}
-      <div className="mb-6 flex justify-end">
-        <Link
-          href="/products/add-products"
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={20} />
-          Add New Product
-        </Link>
-      </div>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 mb-6">
 
-      {/* Unified Products Table */}
-      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-        <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+        {/* Top Actions */}
+        <div className="mb-6 flex justify-end">
+          <Link
+            href="/products/add-products"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={20} />
+            Add New Product
+          </Link>
+        </div>
+
+        {/* Header */}
+        <div className="border-b border-gray-200 pb-4 dark:border-gray-700">
           <h3 className="text-xl font-bold text-black dark:text-white">
-            All Products ({products.length})
+            All Products
+            {/* ({products.length}) */}
           </h3>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="border-b border-stroke bg-gray-50 dark:border-strokedark dark:bg-meta-4">
-                <th className="py-3 px-6 text-left text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Name
-                </th>
-                <th className="py-3 px-6 text-left text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Category
-                </th>
-                <th className="py-3 px-6 text-left text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Size
-                </th>
-                <th className="py-3 px-6 text-center text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Price
-                </th>
-                <th className="py-3 px-6 text-center text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
-                    No products available.
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <table className="w-full min-w-full">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
+                Product
+              </th>
+              <th className="hidden sm:table-cell px-3 py-3 text-center text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
+                Image
+              </th>
+              <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
+                Size
+              </th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
+                Price
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
+                Status
+              </th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {products.map((product) => {
+              const status = product.status || "active";
+              return (
+                <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-3 py-3 sm:px-6 sm:py-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-900 dark:text-white sm:text-sm">
+                        {product.name}
+                      </p>
+                      <div className="mt-0.5 flex items-center gap-1 sm:mt-1">
+                        {product.category === "water" ? (
+                          <Droplets size={14} className="text-blue-500" />
+                        ) : (
+                          <Coffee size={14} className="text-purple-500" />
+                        )}
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {product.category === "milk" ? "Milk" : "Water"}
+                        </p>
+                      </div>
+                      <div className="mt-1 space-y-0.5 md:hidden">
+                        {product.size && (
+                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                            <Droplets size={12} className="inline h-3 w-3" /> {product.size}
+                          </p>
+                        )}
+                        <p className="text-xs font-semibold text-green-600 dark:text-green-400">
+                          PKR {product.price.toFixed(2)}
+                        </p>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+                          {status}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="hidden sm:table-cell px-3 py-3 text-center sm:px-6 sm:py-4">
+                    {product.image && (
+                      <img
+                        src={`${BASE_IMAGE_URL}${product.image}`}
+                        alt={`${product.name} image`}
+                        className="h-16 w-16 rounded object-contain"
+                      />
+                    )}
+                  </td>
+                  <td className="hidden px-3 py-3 sm:px-6 sm:py-4 md:table-cell">
+                    <div className="text-xs text-gray-900 dark:text-white sm:text-sm">
+                      {product.size ? (
+                        <p className="flex items-center gap-1">
+                          <Droplets size={14} className="text-blue-500" />
+                          {product.size}
+                        </p>
+                      ) : (
+                        <p>-</p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right text-sm font-medium text-gray-900 dark:text-gray-100 sm:px-6 sm:py-4">
+                    PKR {product.price.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-3 py-3 sm:px-6 sm:py-4">
+                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+                      {status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 sm:px-6 sm:py-4">
+                    <div className="relative flex items-center justify-center gap-1 sm:gap-2">
+                      <Link href={`/products/form?mode=edit&id=${product.id}`}>
+                        <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300">
+                          <Edit2 size={16} className="sm:size-[18px]" />
+                        </button>
+                      </Link>
+                      {/* Dropdown Button */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenId(openId === product.id ? null : product.id)}
+                          className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
+                          <MoreVertical size={16} className="sm:size-[18px]" />
+                        </button>
+                        {/* Dropdown Menu */}
+                        {openId === product.id && (
+                          <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                            <button
+                              onClick={() => {
+                                handleDelete(product.id);
+                                setOpenId(null);
+                              }}
+                              className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                products.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="border-b border-stroke hover:bg-gray-50 dark:border-strokedark dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <td className="py-4 px-6 text-sm font-medium text-black dark:text-white">
-                      {product.name}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                          product.category === "milk"
-                            ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                        }`}
-                      >
-                        {product.category === "milk" ? "Milk" : "Water"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300">
-                      {product.size || "—"}
-                    </td>
-                    <td className="py-4 px-6 text-center text-sm font-semibold text-green-600 dark:text-green-400">
-                      PKR {product.price.toFixed(2)}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-center gap-3">
-                        <Link
-                          href={`/products/form?mode=edit&id=${product.id}`}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Edit product"
-                        >
-                          <Edit2 size={18} />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Delete product"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* Empty State */}
+        {products.length === 0 && (
+          <div className="p-8 text-center">
+            <Droplets className="mx-auto mb-3 h-12 w-12 text-gray-400" />
+            <p className="text-gray-500 dark:text-gray-400">
+              {isError ? "Failed to load products from server." : "No products available."}
+            </p>
+            {isError && (
+              <p className="text-sm text-gray-400 mt-1">
+                Showing offline/local data if available.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </DefaultLayout>
   );

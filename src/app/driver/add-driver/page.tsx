@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useState, ChangeEvent } from "react";
-import { ArrowLeft, User, Phone, MapPin, Truck, Wifi, Save } from "lucide-react";
+import React, { useState, ChangeEvent, useEffect } from "react";
+import { ArrowLeft, User, Phone, MapPin, Truck, Save, Hash } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import { useZoneStore } from "@/lib/store/useZoneStore";
+import { useZone, useCreateDriver } from "@/lib/api/servicesHooks";
+import { Zone } from "@/lib/types/auth";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   id: string;
   name: string;
   contact: string;
   zone: string;
-  vehicle: string;
-  status: "Online" | "Offline";
-  mode: "Online Mode" | "Hybrid Mode" | "Offline Mode";
+  vehicleId: string;
 }
 
 interface Errors {
@@ -20,29 +22,31 @@ interface Errors {
 }
 
 export default function AddDriver() {
+  const router = useRouter();
+  const { data: dataaa, isLoading, isError } = useZone();
+  const createDriverMutation = useCreateDriver();
+
+  // Get zones from the store
+  const zones = useZoneStore((s) => s.state.zone) || [];
+
+  // Update zones in store when data is fetched
+   useEffect(() => {
+    if (dataaa?.zones) {
+      useZoneStore.getState().setState({ zone: dataaa.zones });
+    }
+  }, [dataaa]);
+
   const [formData, setFormData] = useState<FormData>({
     id: "",
     name: "",
     contact: "",
     zone: "",
-    vehicle: "",
-    status: "Online",
-    mode: "Online Mode",
+    vehicleId: "",
   });
 
   const [errors, setErrors] = useState<Errors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const zones: string[] = [
-    "Zone A - Downtown",
-    "Zone B - Uptown",
-    "Zone C - Business District",
-    "Zone D - Suburbs",
-  ];
-
-  const modes: ("Online Mode" | "Hybrid Mode" | "Offline Mode")[] = ["Online Mode", "Hybrid Mode", "Offline Mode"];
-  const statuses: ("Online" | "Offline")[] = ["Online", "Offline"];
-
-  // Auto-generate initials from name
   const getInitials = (name: string): string => {
     if (!name) return "";
     return name
@@ -56,45 +60,87 @@ export default function AddDriver() {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error on change
+    // Clear error for this field when user starts typing
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const validateForm = (): boolean => {
     const newErrors: Errors = {};
-    if (!formData.id.trim()) newErrors.id = "Driver ID is required";
-    if (!formData.name.trim()) newErrors.name = "Driver name is required";
-    if (!formData.contact.trim()) newErrors.contact = "Contact number is required";
-    if (!formData.zone.trim()) newErrors.zone = "Zone is required";
-    if (!formData.vehicle.trim()) newErrors.vehicle = "Vehicle ID is required";
-    if (!formData.status) newErrors.status = "Status is required";
-    if (!formData.mode) newErrors.mode = "Mode is required";
+
+    if (!formData.id.trim()) {
+      newErrors.id = "Driver ID is required";
+    }
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Driver name is required";
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = "Driver name must be at least 3 characters";
+    }
+
+    if (!formData.contact.trim()) {
+      newErrors.contact = "Contact number is required";
+    } else if (!/^\+?[\d\s-()]+$/.test(formData.contact)) {
+      newErrors.contact = "Please enter a valid contact number";
+    }
+
+    if (!formData.zone.trim()) {
+      newErrors.zone = "Zone is required";
+    }
+
+    if (!formData.vehicleId.trim()) {
+      newErrors.vehicleId = "Vehicle ID is required";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Auto-add initials
-      const dataWithInitials = { ...formData, initials: getInitials(formData.name) };
-      // Simulate API call
-      console.log("New Driver Data:", dataWithInitials);
-      alert("Driver added successfully! (Check console for data)");
-      // Reset form
-      setFormData({
-        id: "",
-        name: "",
-        contact: "",
-        zone: "",
-        vehicle: "",
-        status: "Online",
-        mode: "Online Mode",
-      });
-      setErrors({});
+
+    if (!validateForm()) {
+      return;
     }
+
+    setIsSubmitting(true);
+
+    // Create payload matching API requirements
+    const payload = {
+      name: formData.name,
+      phone: formData.contact,
+      vehicleId: formData.vehicleId,
+      zoneId: formData.zone,
+    };
+
+    createDriverMutation.mutate(payload, {
+      onSuccess: () => {
+        setTimeout(() => {
+          router.push("/driver/all-driver-routes");
+        }, 1000);
+
+        setFormData({
+          id: "",
+          name: "",
+          contact: "",
+          zone: "",
+          vehicleId: "",
+        });
+        setErrors({});
+        setIsSubmitting(false);
+      },
+      onError: (error: any) => {
+        console.error("Driver creation failed:", error);
+        const errorMessage = error?.response?.data?.message || error?.message || "Failed to create driver. Please try again.";
+        alert(errorMessage);
+        setIsSubmitting(false);
+      },
+    });
   };
 
   return (
@@ -104,7 +150,6 @@ export default function AddDriver() {
         description="Fill in the details to add a new driver to the fleet"
       />
 
-      {/* Header with Back Button */}
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => window.history.back()}
@@ -115,14 +160,13 @@ export default function AddDriver() {
         </button>
       </div>
 
-      {/* Form Card */}
       <div className="rounded-sm border border-stroke bg-white px-6 py-8 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ID & Name Section */}
+          {/* Driver ID & Name */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* <div>
+            <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <Truck className="inline mr-2 h-4 w-4" />
+                <Hash className="inline mr-2 h-4 w-4" />
                 Driver ID *
               </label>
               <input
@@ -131,12 +175,11 @@ export default function AddDriver() {
                 value={formData.id}
                 onChange={handleChange}
                 placeholder="e.g., DRV-001"
-                className={`w-full rounded-lg border ${
-                  errors.id ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.id ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.id && <p className="mt-1 text-xs text-red-500">{errors.id}</p>}
-            </div> */}
+            </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -149,18 +192,17 @@ export default function AddDriver() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter full name"
-                className={`w-full rounded-lg border ${
-                  errors.name ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.name ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-              {formData.name && (
+              {formData.name && !errors.name && (
                 <p className="mt-1 text-xs text-gray-500">Initials: {getInitials(formData.name)}</p>
               )}
             </div>
           </div>
 
-          {/* Contact & Zone Section */}
+          {/* Contact & Zone */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -173,9 +215,8 @@ export default function AddDriver() {
                 value={formData.contact}
                 onChange={handleChange}
                 placeholder="e.g., +1 555-0201"
-                className={`w-full rounded-lg border ${
-                  errors.contact ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.contact ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.contact && <p className="mt-1 text-xs text-red-500">{errors.contact}</p>}
             </div>
@@ -185,26 +226,36 @@ export default function AddDriver() {
                 <MapPin className="inline mr-2 h-4 w-4" />
                 Zone *
               </label>
-              <select
-                name="zone"
-                value={formData.zone}
-                onChange={handleChange}
-                className={`w-full rounded-lg border ${
-                  errors.zone ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-              >
-                <option value="">Select Zone</option>
-                {zones.map((zone) => (
-                  <option key={zone} value={zone}>
-                    {zone}
-                  </option>
-                ))}
-              </select>
+              {isLoading ? (
+                <div className="w-full rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm text-gray-500">
+                  Loading zones...
+                </div>
+              ) : isError ? (
+                <div className="w-full rounded-lg border border-red-500 bg-transparent py-2 px-4 text-sm text-red-500">
+                  Failed to load zones
+                </div>
+              ) : (
+                <select
+                  name="zone"
+                  value={formData.zone}
+                  onChange={handleChange}
+                  className={`w-full rounded-lg border ${errors.zone ? "border-red-500" : "border-stroke"
+                    } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                >
+                  <option value="">Select Zone</option>
+                  {zones.length > 0 &&
+                    zones.map((zone: Zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name}
+                      </option>
+                    ))}
+                </select>
+              )}
               {errors.zone && <p className="mt-1 text-xs text-red-500">{errors.zone}</p>}
             </div>
           </div>
 
-          {/* Vehicle & Status Section */}
+          {/* Vehicle ID */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -213,71 +264,35 @@ export default function AddDriver() {
               </label>
               <input
                 type="text"
-                name="vehicle"
-                value={formData.vehicle}
+                name="vehicleId"
+                value={formData.vehicleId}
                 onChange={handleChange}
                 placeholder="e.g., TR-1234"
-                className={`w-full rounded-lg border ${
-                  errors.vehicle ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${errors.vehicleId ? "border-red-500" : "border-stroke"
+                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
-              {errors.vehicle && <p className="mt-1 text-xs text-red-500">{errors.vehicle}</p>}
+              {errors.vehicleId && <p className="mt-1 text-xs text-red-500">{errors.vehicleId}</p>}
             </div>
-
-            {/* <div>
-              <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <Wifi className="inline mr-2 h-4 w-4" />
-                Status *
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className={`w-full rounded-lg border ${
-                  errors.status ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-              {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-            </div> */}
           </div>
-
-          {/* Mode Section */}
-          {/* <div>
-            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-              <Wifi className="inline mr-2 h-4 w-4" />
-              Mode *
-            </label>
-            <select
-              name="mode"
-              value={formData.mode}
-              onChange={handleChange}
-              className={`w-full rounded-lg border ${
-                errors.mode ? "border-red-500" : "border-stroke"
-              } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-            >
-              {modes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
-                </option>
-              ))}
-            </select>
-            {errors.mode && <p className="mt-1 text-xs text-red-500">{errors.mode}</p>}
-          </div> */}
 
           {/* Submit Button */}
           <div className="pt-4">
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500"
+              disabled={isSubmitting || isLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
-              <Save size={20} />
-              Create Driver
+              {isSubmitting ? (
+                <>
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save size={20} />
+                  Create Driver
+                </>
+              )}
             </button>
           </div>
         </form>

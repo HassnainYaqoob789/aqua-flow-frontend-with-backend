@@ -1,9 +1,9 @@
 // src/app/order/add-order/page.tsx
 "use client";
 
-import React, { useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent, useEffect } from "react";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -12,82 +12,82 @@ import {
   User,
   DollarSign,
   CreditCard,
-  Clock,
   Truck,
   Save,
   Plus,
   Minus,
   Trash2,
 } from "lucide-react";
-import {
-  Water19L,
-  Water10L,
-  Water5L,
-  Water1_5L,
-  Water500mlPack,
-  Milk1L,
-  Milk2L,
-  Milk500mlPack,
-} from "@/components/icons/BottleSVG";
+import { useCustomers, useDriver, useProducts } from "@/lib/api/servicesHooks";
+import { IMG_URL } from "@/lib/api/services/endpoints";
+import { useProductStore } from "@/lib/store/useProduct";
+import { useCustomerStore } from "@/lib/store/useCustomerStore";
+import { useDriverStore } from "@/lib/store/useDriver";
+import { useCreateOrder } from "@/lib/api/servicesHooks";
+import { CreateOrderPayload } from "@/lib/types/auth";
 
 interface OrderItem {
   id: string;
   name: string;
   size: string;
   quantity: number;
-  icon: React.ReactNode;
   price: number;
+  image: string;
 }
 
 interface FormData {
   customer: string;
   address: string;
   items: OrderItem[];
-  date: string;
-  time: string;
+  date: string;           // Only delivery date
   driver: string;
+  zoneId: string;
   amount: string;
-  payment: "COD" | "Card" | "Wallet";
-  status: "Pending";
+  payment: "COD";
 }
 
 interface Errors {
   [key: string]: string;
 }
 
-const PRODUCTS = [
-  { id: "water-19l", name: "Water Bottle", size: "19L", price: 5.99, icon: Water19L },
-  { id: "water-10l", name: "Water Bottle", size: "10L", price: 3.49, icon: Water10L },
-  { id: "water-5l", name: "Water Bottle", size: "5L", price: 2.49, icon: Water5L },
-  { id: "water-1.5l", name: "Water Bottle", size: "1.5L", price: 1.49, icon: Water1_5L },
-  { id: "water-500ml", name: "Water Bottle", size: "500ml (Pack of 6)", price: 2.99, icon: Water500mlPack },
-  { id: "milk-1l", name: "Milk Bottle", size: "1L", price: 2.99, icon: Milk1L },
-  { id: "milk-2l", name: "Milk Bottle", size: "2L", price: 4.99, icon: Milk2L },
-  { id: "milk-500ml", name: "Milk Bottle", size: "500ml (Pack of 6)", price: 3.99, icon: Milk500mlPack },
-];
-
 export default function AddOrder() {
+  const router = useRouter();
+
+  const createOrderMutation = useCreateOrder();
+
+  useProducts();
+  const products = useProductStore((state) => state.state.products);
+
+  useCustomers();
+  const customers = useCustomerStore((state) => state.state.customers);
+
+  useDriver();
+  const drivers = useDriverStore((state) => state.state.drivers);
+
   const [formData, setFormData] = useState<FormData>({
     customer: "",
     address: "",
     items: [],
     date: "",
-    time: "",
     driver: "",
-    amount: "",
+    zoneId: "",
+    amount: "0",
     payment: "COD",
-    status: "Pending",
   });
 
   const [errors, setErrors] = useState<Errors>({});
 
-  // Add product or increment quantity with single click
-  const handleProductClick = (product: typeof PRODUCTS[0]) => {
-    const existing = formData.items.find((i) => i.id === product.id);
-    const Icon = product.icon;
+  // Auto-calculate total amount
+  useEffect(() => {
+    const total = formData.items
+      .reduce((sum, item) => sum + item.price * item.quantity, 0)
+      .toFixed(2);
+    setFormData((prev) => ({ ...prev, amount: total }));
+  }, [formData.items]);
 
+  const handleProductClick = (product: any) => {
+    const existing = formData.items.find((i) => i.id === product.id);
     if (existing) {
-      // Increment quantity
       setFormData((prev) => ({
         ...prev,
         items: prev.items.map((i) =>
@@ -95,7 +95,6 @@ export default function AddOrder() {
         ),
       }));
     } else {
-      // Add new product with quantity 1
       setFormData((prev) => ({
         ...prev,
         items: [
@@ -106,14 +105,13 @@ export default function AddOrder() {
             size: product.size,
             quantity: 1,
             price: product.price,
-            icon: <Icon className="h-6 w-6" />,
+            image: product.image,
           },
         ],
       }));
     }
   };
 
-  // Get quantity for a product
   const getProductQuantity = (productId: string): number => {
     const item = formData.items.find((i) => i.id === productId);
     return item ? item.quantity : 0;
@@ -123,7 +121,9 @@ export default function AddOrder() {
     setFormData((prev) => ({
       ...prev,
       items: prev.items
-        .map((i) => (i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i))
+        .map((i) =>
+          i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i
+        )
         .filter((i) => i.quantity > 0),
     }));
   };
@@ -135,55 +135,118 @@ export default function AddOrder() {
     }));
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const handleCustomerChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const customerId = e.target.value;
+    const selectedCustomer = customers.find((c) => c.id === customerId);
+
+    setFormData((prev) => ({
+      ...prev,
+      customer: customerId,
+      zoneId: selectedCustomer?.zone?.id || "",
+      address: selectedCustomer?.address || "",
+      driver: "", // reset driver when customer changes
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      customer: "",
+      zoneId: "",
+      address: "",
+      driver: "",
+    }));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Errors = {};
-    if (!formData.customer.trim()) newErrors.customer = "Customer name is required";
+
+    if (!formData.customer) newErrors.customer = "Customer is required";
+    if (!formData.zoneId) newErrors.zoneId = "Zone is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (formData.items.length === 0) newErrors.items = "Add at least one product";
-    if (!formData.date) newErrors.date = "Date is required";
-    if (!formData.time.trim()) newErrors.time = "Time slot is required";
-    if (!formData.driver.trim()) newErrors.driver = "Driver is required";
-    if (!formData.amount || isNaN(Number(formData.amount)) || parseFloat(formData.amount) <= 0)
-      newErrors.amount = "Valid amount is required";
+    if (!formData.date) newErrors.date = "Delivery date is required";
+    if (!formData.driver) newErrors.driver = "Driver is required";
+
+    const totalAmount = parseFloat(formData.amount);
+    if (!totalAmount || totalAmount <= 0)
+      newErrors.amount = "Total amount must be greater than 0";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      console.log("Order Created:", formData);
-      alert("Order created successfully!");
+    // Optional: Warn user if they select Card/Wallet but backend doesn't support it yet
+    if (formData.payment !== "COD") {
+      const confirmProceed = confirm(
+        "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
+      );
+      if (!confirmProceed) return;
+    }
+
+    try {
+      const payload: CreateOrderPayload = {
+        customerId: formData.customer,
+        driverId: formData.driver,
+        deliveryDate: formData.date, // YYYY-MM-DD → exactly what backend expects
+        items: formData.items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+        // Only include paymentMethod if it's COD (or force COD always)
+        ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
+      };
+
+      console.log("Submitting order:", payload);
+
+      await createOrderMutation.mutateAsync(payload);
+
+      setTimeout(() => {
+        router.push("/order/all-orders");
+      }, 1000);
+
+      // Reset form to initial state
       setFormData({
         customer: "",
         address: "",
         items: [],
         date: "",
-        time: "",
         driver: "",
-        amount: "",
+        zoneId: "",
+        amount: "0",
         payment: "COD",
-        status: "Pending",
       });
+
+      setErrors({}); // Clear any old errors
+    } catch (err: any) {
+      console.error("Order creation failed:", err);
+      alert(err?.message || "Failed to create order. Please try again.");
     }
   };
 
   const totalItems = formData.items.reduce((s, i) => s + i.quantity, 0);
+  const totalAmount = parseFloat(formData.amount) || 0;
 
   return (
     <DefaultLayout>
-
       <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900">
         <div className="mx-auto max-w-6xl">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Order</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Create a new water delivery order</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Add New Order
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Create a new water delivery order
+            </p>
           </div>
 
           {/* Back Button */}
@@ -196,27 +259,53 @@ export default function AddOrder() {
             </button>
           </div>
 
-          {/* Form */}
           <div className="space-y-6">
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              {/* Customer & Address */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Customer, Zone & Address */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <User className="h-4 w-4" /> Customer Name *
+                  </label>
+                  <select
+                    name="customer"
+                    value={formData.customer}
+                    onChange={handleCustomerChange}
+                    className={`w-full rounded-lg border ${errors.customer ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.customer && (
+                    <p className="mt-1 text-xs text-red-500">{errors.customer}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <MapPin className="h-4 w-4" /> Zone *
                   </label>
                   <input
                     type="text"
-                    name="customer"
-                    value={formData.customer}
-                    onChange={handleChange}
-                    placeholder="John Doe"
-                    className={`w-full rounded-lg border ${errors.customer ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    value={
+                      formData.customer
+                        ? customers.find((c) => c.id === formData.customer)?.zone?.name ||
+                        "No zone"
+                        : ""
+                    }
+                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
                   />
-                  {errors.customer && <p className="mt-1 text-xs text-red-500">{errors.customer}</p>}
+                  {errors.zoneId && (
+                    <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>
+                  )}
                 </div>
+
                 <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <MapPin className="h-4 w-4" /> Delivery Address *
                   </label>
                   <input
@@ -225,221 +314,235 @@ export default function AddOrder() {
                     value={formData.address}
                     onChange={handleChange}
                     placeholder="123 Main St, Karachi"
-                    className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                   />
-                  {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
+                  {errors.address && (
+                    <p className="mt-1 text-xs text-red-500">{errors.address}</p>
+                  )}
                 </div>
               </div>
 
-              {/* Product Grid */}
+              {/* Product Selection */}
               <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-                <label className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <Package className="h-4 w-4" /> Select Products * <span className="text-xs text-gray-500">(Click to add)</span>
+                <label className="mb-4 flex items-center gap-2 text-sm font-medium">
+                  <Package className="h-4 w-4" /> Select Products *
+                  <span className="text-xs text-gray-500">(Click to add)</span>
                 </label>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                  {PRODUCTS.map((p) => {
-                    const Icon = p.icon;
-                    const quantity = getProductQuantity(p.id);
+                  {products.map((p) => {
+                    const qty = getProductQuantity(p.id);
                     return (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => handleProductClick(p)}
-                        className={`relative flex flex-col items-center rounded-lg border p-3 transition-all hover:shadow-md ${quantity > 0
-                            ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
-                            : "border-gray-300 bg-white hover:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-500"
+                        className={`relative flex flex-col items-center rounded-lg border p-3 transition-all hover:shadow-md ${qty > 0
+                          ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
+                          : "border-gray-300 bg-white hover:border-blue-400 dark:border-gray-600 dark:bg-gray-800"
                           }`}
                       >
-                        {/* Quantity Badge */}
-                        {quantity > 0 && (
-                          <div className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-lg">
-                            {quantity}
+                        {qty > 0 && (
+                          <div className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                            {qty}
                           </div>
                         )}
-                        <Icon className="mb-2 h-12 w-12 text-blue-600 dark:text-blue-400" />
-                        <p className="text-xs font-medium text-gray-900 dark:text-white">{p.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{p.size}</p>
-                        <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">PKR {p.price.toFixed(2)}</p>
+                        <img
+                          src={`${IMG_URL}${p.image}`}
+                          alt={p.name}
+                          className="mb-2 h-12 w-12 object-contain"
+                        />
+                        <p className="text-xs font-medium">{p.name}</p>
+                        <p className="text-xs text-gray-500">{p.size}</p>
+                        <p className="mt-1 text-sm font-semibold">
+                          PKR {p.price.toFixed(2)}
+                        </p>
                       </button>
                     );
                   })}
                 </div>
 
-                {errors.items && <p className="mt-2 text-xs text-red-500">{errors.items}</p>}
+                {errors.items && (
+                  <p className="mt-2 text-xs text-red-500">{errors.items}</p>
+                )}
 
-                {/* Selected Items */}
+                {/* Selected Items Table */}
                 {formData.items.length > 0 && (
-                  <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="mt-6 overflow-x-auto rounded-lg border dark:border-gray-700">
                     <table className="w-full">
                       <thead className="bg-gray-100 dark:bg-gray-800">
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-900 dark:text-white">Product</th>
-                          <th className="py-3 px-4 text-center text-sm font-medium text-gray-900 dark:text-white">Quantity</th>
-                          <th className="py-3 px-4 text-center text-sm font-medium text-gray-900 dark:text-white">Action</th>
+                        <tr>
+                          <th className="py-3 px-4 text-left text-sm font-medium">Product</th>
+                          <th className="py-3 px-4 text-center text-sm font-medium">Qty</th>
+                          <th className="py-3 px-4 text-center text-sm font-medium">Price</th>
+                          <th className="py-3 px-4 text-center text-sm font-medium">Total</th>
+                          <th className="py-3 px-4 text-center text-sm font-medium">Action</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800">
                         {formData.items.map((item) => (
-                          <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700">
+                          <tr key={item.id} className="border-b dark:border-gray-700">
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">
-                                {item.icon}
+                                <img
+                                  src={`${IMG_URL}${item.image}`}
+                                  alt={item.name}
+                                  className="h-8 w-8 rounded object-contain"
+                                />
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.size}</p>
+                                  <p className="text-sm font-medium">{item.name}</p>
+                                  <p className="text-xs text-gray-500">{item.size}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   type="button"
                                   onClick={() => handleQuantityChange(item.id, -1)}
-                                  className="rounded bg-gray-200 p-1.5 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                  className="rounded bg-gray-200 p-1 hover:bg-gray-300 dark:bg-gray-700"
                                 >
-                                  <Minus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                                  <Minus className="h-4 w-4" />
                                 </button>
-                                <span className="w-10 text-center text-sm font-medium text-gray-900 dark:text-white">{item.quantity}</span>
+                                <span className="w-12 text-center font-medium">
+                                  {item.quantity}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => handleQuantityChange(item.id, 1)}
-                                  className="rounded bg-gray-200 p-1.5 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                  className="rounded bg-gray-200 p-1 hover:bg-gray-300 dark:bg-gray-700"
                                 >
-                                  <Plus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                                  <Plus className="h-4 w-4" />
                                 </button>
                               </div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              PKR {item.price.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 text-center font-medium text-blue-600 dark:text-blue-400">
+                              PKR {(item.price * item.quantity).toFixed(2)}
                             </td>
                             <td className="py-3 px-4 text-center">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveItem(item.id)}
-                                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                className="text-red-500 hover:text-red-700"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-5 w-5" />
                               </button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="bg-gray-50 p-3 text-right dark:bg-gray-900">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">Total Items: {totalItems}</span>
+
+                    <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t dark:border-gray-700">
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total Amount:</span>
+                        <span>PKR {totalAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Total Items: {totalItems}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Date & Time */}
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                    <Calendar className="h-4 w-4" /> Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg border ${errors.date ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                  />
-                  {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
-                </div>
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                    <Clock className="h-4 w-4" /> Time Slot *
-                  </label>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="time"
-                      name="startTime"
-                      // value={formData.startTime}
-                      onChange={handleChange}
-                      className={`w-1/2 rounded-lg border ${errors.startTime ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                    />
-
-                    <input
-                      type="time"
-                      name="endTime"
-                      // value={formData.endTime}
-                      onChange={handleChange}
-                      className={`w-1/2 rounded-lg border ${errors.endTime ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                    />
-                  </div>
-
-                  {(errors.startTime || errors.endTime) && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors.startTime || errors.endTime}
-                    </p>
-                  )}
-                </div>
-
+              {/* Delivery Date */}
+              <div className="mt-6">
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                  <Calendar className="h-4 w-4" /> Delivery Date *
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className={`w-full max-w-xs rounded-lg border ${errors.date ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                />
+                {errors.date && (
+                  <p className="mt-1 text-xs text-red-500">{errors.date}</p>
+                )}
               </div>
 
               {/* Driver & Amount */}
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <Truck className="h-4 w-4" /> Driver *
+                  </label>
+                  {formData.zoneId ? (
+                    <select
+                      name="driver"
+                      value={formData.driver}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg border ${errors.driver ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                    >
+                      <option value="">Select driver</option>
+                      {drivers
+                        .filter((d) => d.zoneId === formData.zoneId)
+                        .map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name} ({d.vehicleId || "No Vehicle"}) - ⭐{d.rating || "N/A"}
+                          </option>
+                        ))}
+                    </select>
+                  ) : (
+                    <div className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 dark:bg-gray-700">
+                      Select a customer first to see available drivers
+                    </div>
+                  )}
+                  {errors.driver && (
+                    <p className="mt-1 text-xs text-red-500">{errors.driver}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <DollarSign className="h-4 w-4" /> Total Amount (PKR)
                   </label>
                   <input
                     type="text"
-                    name="driver"
-                    value={formData.driver}
-                    onChange={handleChange}
-                    placeholder="Ahmed Khan"
-                    className={`w-full rounded-lg border ${errors.driver ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    value={totalAmount.toFixed(2)}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-lg font-bold cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
                   />
-                  {errors.driver && <p className="mt-1 text-xs text-red-500">{errors.driver}</p>}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Auto-calculated
+                  </p>
                 </div>
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                    <DollarSign className="h-4 w-4" /> Amount (PKR) *
-                  </label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className={`w-full rounded-lg border ${errors.amount ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                  />
-                  {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
-                </div>
+
               </div>
 
-              {/* Payment */}
+              {/* Payment Method */}
               <div className="mt-6">
-                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <CreditCard className="h-4 w-4" /> Payment Method
                 </label>
                 <select
                   name="payment"
                   value={formData.payment}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="COD">Cash on Delivery</option>
-                  <option value="Card">Card</option>
-                  <option value="Wallet">Wallet</option>
                 </select>
               </div>
 
               {/* Submit */}
               <button
                 onClick={handleSubmit}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700"
+                disabled={createOrderMutation.isPending}
+                className="mt-10 w-full flex items-center justify-center gap-3 rounded-lg bg-blue-600 py-4 text-lg font-semibold text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
               >
-                <Save size={20} /> Create Order
+                <Save size={22} />
+                {createOrderMutation.isPending ? "Creating..." : "Create Order"}
               </button>
             </div>
           </div>
         </div>
       </div>
     </DefaultLayout>
-
   );
 }
