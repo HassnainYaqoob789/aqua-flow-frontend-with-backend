@@ -106,10 +106,7 @@ export default function CustomerFormPage() {
       {
         onSuccess: () => {
           console.log("Customer updated successfully!");
-
-          setTimeout(() => {
-            router.push("/customer/all-customers");
-          }, 1000);
+          router.push("/customer/all-customers");
         },
 
         onError: (err: any) => {

@@ -61,10 +61,7 @@ export default function CreateZone() {
       },
       {
         onSuccess: () => {
-          setTimeout(() => {
-            router.push("/zone/all-zone");
-          }, 1000);
-
+          router.push("/zone/all-zone");
         },
         onError: (err: any) => {
           setError(err.response?.data?.message || err.message || "Failed to create zone. Please try again.");

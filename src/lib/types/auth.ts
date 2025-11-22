@@ -231,3 +231,41 @@ export interface GetOrdersResponse {
   stats: OrderStats;
   pagination: PaginationInfo;
 }
+
+
+
+export interface InventoryResponse {
+  totalBottles: number;
+  inStock: number;
+  withCustomers: number;
+  totalActiveBottles: number;
+  totalSecurityDeposit: number;
+  lowStockAlert: boolean;
+  lowStockMessage: string | null;
+  bottleStockLevels: BottleStockLevel[];
+  recentTransactions: RecentTransaction[];
+  emptiesTracking: EmptiesTracking[];
+}
+
+export interface BottleStockLevel {
+  [key: string]: any;
+}
+
+export interface RecentTransaction {
+  customerName: string;
+  driverName: string;
+  date: string;
+  bottles: number;
+  status: string;
+}
+
+export interface EmptiesTracking {
+  // Structure unknown for now
+  [key: string]: any;
+}
+
+
+export interface CreateInventoryRequest {
+  quantity: number;
+  [key: string]: any;
+}

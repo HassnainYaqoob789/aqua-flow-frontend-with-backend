@@ -112,17 +112,17 @@ export default function AddDriver() {
 
     // Create payload matching API requirements
     const payload = {
-      name: formData.name,
+      name
+      : formData.name,
       phone: formData.contact,
-      vehicleId: formData.vehicleId,
+      vehicleNumber: formData.vehicleId,
       zoneId: formData.zone,
     };
 
     createDriverMutation.mutate(payload, {
       onSuccess: () => {
-        setTimeout(() => {
           router.push("/driver/all-driver-routes");
-        }, 1000);
+
 
         setFormData({
           id: "",

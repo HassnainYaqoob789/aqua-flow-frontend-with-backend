@@ -13,6 +13,7 @@
     "@tanstack/react-table": "^8.21.3",
     "apexcharts": "^5.3.6",
     "axios": "^1.13.2",
+    "browser-image-compression": "^2.0.2",
     "date-fns": "^4.1.0",
     "flatpickr": "^4.6.13",
     "js-cookie": "^3.0.5",

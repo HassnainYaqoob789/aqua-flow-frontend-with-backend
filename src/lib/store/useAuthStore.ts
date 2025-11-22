@@ -6,11 +6,14 @@ import { LoginResponse } from "@/lib/types/auth";
 interface AuthState {
   user: LoginResponse["user"] | null;
   token: string | null;
+  loading: boolean;
+  logout: () => void;
 }
 
 export const useAuthStore = createStoreFactory<AuthState & { logout: () => void }>({
   user: null,
   token: null,
+  loading: true, // <-- CRITICAL
   logout: () => {
     Cookies.remove("token");
     useAuthStore.getState().resetState();
@@ -39,7 +42,7 @@ export const setAuth = (data: LoginResponse) => {
 };
 
 export const logout = () => {
- Cookies.remove("token");
-    Cookies.remove("user");
-    useAuthStore.getState().resetState();
+  Cookies.remove("token");
+  Cookies.remove("user");
+  useAuthStore.getState().resetState();
 };

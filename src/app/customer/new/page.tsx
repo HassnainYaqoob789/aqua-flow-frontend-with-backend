@@ -22,7 +22,7 @@ export default function AddCustomer() {
 
   console.log("Zones data:", dataaa);
 
-    useEffect(() => {
+  useEffect(() => {
     if (dataaa?.zones) {
       useZoneStore.getState().setState({ zone: dataaa.zones });
     }
@@ -75,11 +75,7 @@ export default function AddCustomer() {
       },
       {
         onSuccess: () => {
-
-          setTimeout(() => {
-            router.push("/customer/all-customers");
-          }, 1000);
-
+          router.push("/customer/all-customers");
           setFormData({
             name: "",
             email: "",

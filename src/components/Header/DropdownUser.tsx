@@ -7,6 +7,15 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/lib/store/useAuthStore";
 import Cookies from "js-cookie";
 
+const formatRole = (role: string) => {
+  if (!role) return "";
+  return role
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" "); // "company_admin" -> "Company Admin"
+};
+
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -25,7 +34,6 @@ const DropdownUser = () => {
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
-
       {/* Toggle Button */}
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -35,11 +43,12 @@ const DropdownUser = () => {
           <span className="block text-sm font-medium text-black dark:text-white">
             {name}
           </span>
-          <span className="block text-xs text-green-600 dark:text-green-400">{role}</span>
+          <span className="block text-xs text-green-600 dark:text-green-400">
+            {formatRole(role)}
+          </span>
         </span>
 
-        <span className="h-12 w-12 rounded-full bg-[#333A48] 
-        text-white flex items-center justify-center font-semibold text-lg uppercase shadow-sm">
+        <span className="h-12 w-12 rounded-full bg-[#333A48] text-white flex items-center justify-center font-semibold text-lg uppercase shadow-sm">
           {name.slice(0, 1)}
         </span>
 
@@ -60,17 +69,19 @@ const DropdownUser = () => {
       {/* Dropdown */}
       {dropdownOpen && (
         <div className="absolute right-0 mt-4 w-64 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-
           {/* User info inside dropdown */}
           <div className="flex items-center gap-3 px-6 py-4 border-b border-stroke dark:border-strokedark">
-            <span className="h-12 w-12 rounded-full bg-[#333A48] 
-            text-white flex items-center justify-center font-semibold text-lg uppercase shadow-sm">
+            <span className="h-12 w-12 rounded-full bg-[#333A48] text-white flex items-center justify-center font-semibold text-lg uppercase shadow-sm">
               {name.slice(0, 1)}
             </span>
 
             <div>
-              <p className="text-sm font-medium text-black dark:text-white">{name}</p>
-              <p className="text-xs text-green-600 dark:text-green-400">{role}</p>
+              <p className="text-sm font-medium text-black dark:text-white">
+                {name}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                {formatRole(role)}
+              </p>
             </div>
           </div>
 
@@ -81,7 +92,12 @@ const DropdownUser = () => {
                 href="#"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
               >
-                <svg className="fill-current" width="22" height="22" viewBox="0 0 22 22">
+                <svg
+                  className="fill-current"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 22 22"
+                >
                   <path d="M17.6687 1.44374 ... (trimmed)" />
                 </svg>
                 Change Password
@@ -102,7 +118,6 @@ const DropdownUser = () => {
           </button>
         </div>
       )}
-
     </ClickOutside>
   );
 };

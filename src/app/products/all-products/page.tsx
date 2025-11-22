@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, Loader2, AlertCircle, Droplets, Coffee, MoreVertical } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, AlertCircle, Droplets, Coffee, MoreVertical, Recycle } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { IMG_URL } from "@/lib/api/services/endpoints";
@@ -18,6 +18,7 @@ interface Product {
   status?: string;
   createdAt?: string;
   user?: { name: string };
+  isReusable: boolean;
 }
 
 
@@ -147,22 +148,25 @@ export default function ProductsPage() {
               <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
                 Size
               </th>
+              <th className="hidden px-3 py-3 text-center text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
+                Reusable
+              </th>
               <th className="px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                 Price
               </th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                 Status
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
-                Actions
-              </th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {products.map((product) => {
               const status = product.status || "active";
+
               return (
                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  {/* PRODUCT NAME + CATEGORY + MOBILE INFO */}
                   <td className="px-3 py-3 sm:px-6 sm:py-4">
                     <div>
                       <p className="text-xs font-medium text-gray-900 dark:text-white sm:text-sm">
@@ -178,21 +182,37 @@ export default function ProductsPage() {
                           {product.category === "milk" ? "Milk" : "Water"}
                         </p>
                       </div>
+
+                      {/* MOBILE VIEW BLOCK */}
                       <div className="mt-1 space-y-0.5 md:hidden">
                         {product.size && (
                           <p className="text-xs text-gray-600 dark:text-gray-300">
                             <Droplets size={12} className="inline h-3 w-3" /> {product.size}
                           </p>
                         )}
+
+                        {product.isReusable && (
+                          <p className="text-xs flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <Recycle size={12} /> Reusable
+                          </p>
+                        )}
+
                         <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                           PKR {product.price.toFixed(2)}
                         </p>
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                            status
+                          )}`}
+                        >
                           {status}
                         </span>
                       </div>
                     </div>
                   </td>
+
+                  {/* IMAGE */}
                   <td className="hidden sm:table-cell px-3 py-3 text-center sm:px-6 sm:py-4">
                     {product.image && (
                       <img
@@ -202,6 +222,8 @@ export default function ProductsPage() {
                       />
                     )}
                   </td>
+
+                  {/* SIZE (DESKTOP) */}
                   <td className="hidden px-3 py-3 sm:px-6 sm:py-4 md:table-cell">
                     <div className="text-xs text-gray-900 dark:text-white sm:text-sm">
                       {product.size ? (
@@ -214,14 +236,36 @@ export default function ProductsPage() {
                       )}
                     </div>
                   </td>
+
+                  {/* REUSABLE COLUMN (DESKTOP) */}
+                  <td className="hidden px-3 py-3 text-center sm:px-6 sm:py-4 md:table-cell">
+                    {product.isReusable ? (
+                      <Recycle
+                        size={18}
+                        className="text-green-600 dark:text-green-400 inline-block"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                    )}
+                  </td>
+
+                  {/* PRICE */}
                   <td className="px-3 py-3 text-right text-sm font-medium text-gray-900 dark:text-gray-100 sm:px-6 sm:py-4">
                     PKR {product.price.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                   </td>
+
+                  {/* STATUS */}
                   <td className="px-3 py-3 sm:px-6 sm:py-4">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                        status
+                      )}`}
+                    >
                       {status}
                     </span>
                   </td>
+
+                  {/* ACTIONS */}
                   <td className="px-3 py-3 sm:px-6 sm:py-4">
                     <div className="relative flex items-center justify-center gap-1 sm:gap-2">
                       <Link href={`/products/form?mode=edit&id=${product.id}`}>
@@ -229,7 +273,7 @@ export default function ProductsPage() {
                           <Edit2 size={16} className="sm:size-[18px]" />
                         </button>
                       </Link>
-                      {/* Dropdown Button */}
+
                       <div className="relative">
                         <button
                           onClick={() => setOpenId(openId === product.id ? null : product.id)}
@@ -237,7 +281,7 @@ export default function ProductsPage() {
                         >
                           <MoreVertical size={16} className="sm:size-[18px]" />
                         </button>
-                        {/* Dropdown Menu */}
+
                         {openId === product.id && (
                           <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
                             <button
@@ -260,7 +304,6 @@ export default function ProductsPage() {
           </tbody>
         </table>
 
-        {/* Empty State */}
         {products.length === 0 && (
           <div className="p-8 text-center">
             <Droplets className="mx-auto mb-3 h-12 w-12 text-gray-400" />
@@ -268,13 +311,13 @@ export default function ProductsPage() {
               {isError ? "Failed to load products from server." : "No products available."}
             </p>
             {isError && (
-              <p className="text-sm text-gray-400 mt-1">
-                Showing offline/local data if available.
-              </p>
+              <p className="text-sm text-gray-400 mt-1">Showing offline/local data if available.</p>
             )}
           </div>
         )}
       </div>
+
+
     </DefaultLayout>
   );
 }

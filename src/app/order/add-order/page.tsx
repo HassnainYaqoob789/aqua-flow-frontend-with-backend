@@ -208,12 +208,7 @@ export default function AddOrder() {
       console.log("Submitting order:", payload);
 
       await createOrderMutation.mutateAsync(payload);
-
-      setTimeout(() => {
-        router.push("/order/all-orders");
-      }, 1000);
-
-      // Reset form to initial state
+      router.push("/order/all-orders");
       setFormData({
         customer: "",
         address: "",
@@ -225,7 +220,7 @@ export default function AddOrder() {
         payment: "COD",
       });
 
-      setErrors({}); // Clear any old errors
+      setErrors({}); 
     } catch (err: any) {
       console.error("Order creation failed:", err);
       alert(err?.message || "Failed to create order. Please try again.");

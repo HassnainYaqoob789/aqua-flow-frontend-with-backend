@@ -80,6 +80,11 @@ const menuGroups = [
     name: "FINANCE & REPORTS",
     menuItems: [
       {
+        icon: <Warehouse className="h-5 w-5" />,
+        label: "Inventory",
+        route: "/inventory/all-inventory",
+      },
+      {
         icon: <DollarSign className="h-5 w-5" />,
         label: "All Expenses",
         route: "/expenses/all-expenses",
@@ -89,11 +94,7 @@ const menuGroups = [
         label: "Billing & Recoveries",
         route: "/billing-recoveries",
       },
-      {
-        icon: <Warehouse className="h-5 w-5" />,
-        label: "Inventory",
-        route: "/inventory",
-      },
+
       {
         icon: <FileText className="h-5 w-5" />,
         label: "Reports",

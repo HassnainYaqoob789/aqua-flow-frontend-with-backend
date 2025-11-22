@@ -1,33 +1,34 @@
 import { createQueryFactory, createMutationFactory } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer,updateCustomer,statusCustomer,createZone,getZones,createProducts,getProducts, createDriver, getDrivers, createOrder, getOrders } from "./apiFactory";
-import { setCustomers, addCustomer,update_Customer,status_Customer } from "../store/useCustomerStore";
-import { addZone, setZone} from "../store/useZoneStore";
-import { addProducts,setProducts} from "../store/useProduct";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory } from "./apiFactory";
+import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
+import { addZone, setZone } from "../store/useZoneStore";
+import { addProducts, setProducts } from "../store/useProduct";
 
 
 
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { Customer, StatusPayload } from "../types/auth";
+import { Customer, Product, StatusPayload } from "../types/auth";
 import { addDriver, setDrivers } from "../store/useDriver";
 import { addOrder, setOrders } from "../store/useOrder";
+import { setInventory, updateInventory } from "../store/inventoryStore";
 
 export const useLogin = () => {
   const router = useRouter();
-  
+
   return createMutationFactory("auth", loginUser, (data) => {
     setAuth(data);
-    router.push("/"); 
+    router.replace("/");
   })();
 };
 
 // ================================CUSTOMER HOOKS=========================
 
 export const useCustomers = createQueryFactory("customers", async () => {
-  const data = await getCustomers();   
-  setCustomers(data.customers);     
-  return data;                          
+  const data = await getCustomers();
+  setCustomers(data.customers);
+  return data;
 });
 
 export const useCreateCustomer = createMutationFactory(
@@ -79,9 +80,9 @@ export const useCreateZone = createMutationFactory(
 // =============================================PRODUCTS HOOKS=========================
 
 
-export const useCreateProducts = createMutationFactory(
+export const useCreateProducts = createMutationFactory<Product, FormData>(  // ← FormData here
   "products",
-  createProducts,
+  createProductWithImage,  // ← now matches
   (data) => addProducts(data)
 );
 
@@ -107,9 +108,9 @@ export const useCreateDriver = createMutationFactory(
 );
 
 export const useDriver = createQueryFactory("drivers", async () => {
-  const data = await getDrivers();     
-  setDrivers(data.drivers);           
-  return data;                        
+  const data = await getDrivers();
+  setDrivers(data.drivers);
+  return data;
 });
 
 // =============================================DRIVER HOOKS END=========================
@@ -128,11 +129,48 @@ export const useCreateOrder = createMutationFactory(
 
 
 export const useOrderStore = createQueryFactory("orders", async () => {
-  const data = await getOrders();     
-  setOrders(data.orders);           
-  return data;                        
+  const data = await getOrders();
+  setOrders(data.orders);
+  return data;
 });
 
 
 
 // =============================================ORDERS HOOKS API=========================
+
+
+
+
+// =============================================INVENTORY HOOKS API=========================
+
+
+
+export const useInventoryStore = createQueryFactory("inventory", async () => {
+  const data = await getInventory();
+  setInventory(data); // <-- correct line
+  return data;
+});
+
+
+export const useCreateInventory = createMutationFactory(
+  "inventory",
+  createInventory,
+  (data) => updateInventory(data) // since it's a partial patch
+);
+
+
+
+
+
+
+
+
+
+
+// =============================================INVENTORY HOOKS API=========================
+
+
+
+
+
+

@@ -14,6 +14,8 @@ import {
   CreateOrderPayload,
   GetOrdersResponse,
   ZoneResponse,
+  InventoryResponse,
+  CreateInventoryRequest,
 } from "@/lib/types/auth";
 import { apiGet, apiPatch, apiPost, apiPut } from "./services/apiMethods";
 import {
@@ -30,7 +32,10 @@ import {
   DRIVER_GET_URL,
   ORDER_CREATE_URL,
   ORDER_GET_URL,
+  INVENTORY_GET_URL,
+  INVENTORY_CREATE_URL,
 } from "./services/endpoints";
+import apiClient from "./services/apiClient";
 
 export const loginUser = (payload: LoginRequest) =>
   apiPost<LoginResponse>(LOGIN_URL, payload);
@@ -95,6 +100,11 @@ export const createProducts = async (
 };
 
 
+export const createProductWithImage = async (formData: FormData): Promise<Product> => {
+  const { data } = await apiClient.post<Product>(PRODUCTS_CREATE_URL, formData);
+  return data;
+};
+
 // export const getProducts = async (): Promise<ProductResponse[]> => {
 //   return await apiGet<ProductResponse[]>(PRODUCTS_GET_URL);
 // };
@@ -146,6 +156,26 @@ export const getOrders = async (): Promise<GetOrdersResponse> => {
 
 // ==================================ORDER APIS END============================
 
+
+
+
+// ==================================INVENTORY APIS============================
+
+export const getInventory = async (): Promise<InventoryResponse> => {
+  return await apiGet<InventoryResponse>(INVENTORY_GET_URL);
+};
+
+
+export const createInventory = async (
+  body: Partial<CreateInventoryRequest>
+): Promise<CreateInventoryRequest> => {
+  return await apiPost<CreateInventoryRequest>(INVENTORY_CREATE_URL, body);
+};
+
+
+
+
+// ==================================INVENTORY APIS============================
 
 
 

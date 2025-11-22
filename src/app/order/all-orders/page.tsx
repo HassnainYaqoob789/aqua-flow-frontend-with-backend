@@ -164,7 +164,7 @@ export default function OrderManagement() {
                 <th className="px-4 py-4 font-medium text-black dark:text-white">Amount</th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">Payment</th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">Status</th>
-                <th className="px-4 py-4 font-medium text-black dark:text-white">Actions</th>
+                {/* <th className="px-4 py-4 font-medium text-black dark:text-white">Actions</th> */}
               </tr>
             </thead>
             <tbody>
@@ -215,11 +215,11 @@ export default function OrderManagement() {
                       {formatStatus(order.status)}
                     </span>
                   </td>
-                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                  {/* <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
                       <MoreVertical size={20} />
                     </button>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>

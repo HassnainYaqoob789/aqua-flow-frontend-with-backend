@@ -1,11 +1,12 @@
 // src/lib/config.ts
 
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
-// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
+export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
 
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/api";
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
-export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
+
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
+// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
 
 
 export const LOGIN_URL = `${BASE_URL}/auth/login`;
@@ -60,3 +61,15 @@ export const ORDER_GET_URL = `${BASE_URL}/orders/all`;
 
 // ==========================ORDER API ======================
 
+
+
+// ==========================INVENTORY API ======================
+
+
+export const INVENTORY_GET_URL = `${BASE_URL}/inventory/bottles`;
+export const INVENTORY_CREATE_URL = `${BASE_URL}/inventory/add-bottles`;
+
+
+
+
+// ==========================INVENTORY API ======================

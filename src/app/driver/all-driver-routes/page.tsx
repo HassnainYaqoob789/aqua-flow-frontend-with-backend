@@ -39,6 +39,7 @@ interface Driver {
   tenantId: string;
   userId: string | null;
   zone: Zone;
+  totalRatings: number
 }
 
 interface Stats {
@@ -313,7 +314,7 @@ export default function DriverRouteManagement() {
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-current text-yellow-500" />
                         <span className="text-sm font-medium text-black dark:text-white">
-                          {driver.rating.toFixed(1)}
+                          {driver.totalRatings?.toFixed(1) ?? "0.0"}
                         </span>
                       </div>
                     </td>
@@ -425,7 +426,7 @@ export default function DriverRouteManagement() {
                     Performance:
                   </span>
                   <span className="font-semibold text-black dark:text-white">
-                    {driver.rating.toFixed(1)}
+                    {driver.rating?.toFixed(1) ?? "0.0"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 text-sm">
