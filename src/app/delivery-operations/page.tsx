@@ -1,319 +1,333 @@
-import { MapPin, Truck, Phone, Clock, Check, Users, Package } from "lucide-react";
+"use client";
+
+import { MapPin, Truck, Check, Users, Package, Phone, DollarSign, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
-interface Stat {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  color: string;
+import {
+  useBulkAssignDriver, // New hook
+  useCustomerByZone,
+  useZone,
+  useDriver, // Keep for driver fetching
+} from "@/lib/api/servicesHooks";
+
+import { useEffect, useState } from "react";
+import { useDriverStore } from "@/lib/store/useDriver";
+import { useZoneStore } from "@/lib/store/useZoneStore";
+
+// Updated types to match the API response (add to your types/auth.ts or create a new interface)
+export interface CustomersByZoneResponse {
+  success: boolean;
+  zone: string;
+  totalEligible: number;
+  asOf: string;
+  customers: EligibleCustomer[];
 }
 
-interface Driver {
+export interface EligibleCustomer {
   id: string;
   name: string;
-  status: "delivering" | "available" | "offline";
-  eta: string;
-  completed: number;
-  pending: number;
-  color: string;
-}
-
-interface PendingOrder {
-  id: string;
-  customer: string;
+  phone: string;
   address: string;
-  time: string;
-  items: string;
+  empties: number;
+  deliverableBottles: number;
+  pendingOrdersCount: number;
+  totalPendingAmount: number;
+  pendingOrders: PendingOrder[];
+  lastDelivery: string;
+  nextEligible: string;
+  eligibleToday: boolean;
 }
 
+export interface PendingOrder {
+  id: string;
+  number: string;
+  amount: number;
+}
+
+/* -------------------------------------------------------
+   Main Component
+------------------------------------------------------- */
 export default function DeliveryOperations() {
-  const stats: Stat[] = [
-    {
-      label: "Active Drivers",
-      value: "3/4",
-      icon: Users,
-      color: "text-blue-600",
-    },
-    { label: "In Transit", value: "8", icon: Truck, color: "text-green-600" },
-    {
-      label: "Completed Today",
-      value: "41",
-      icon: Check,
-      color: "text-emerald-600",
-    },
-    {
-      label: "Pending Assignment",
-      value: "12",
-      icon: Package,
-      color: "text-orange-600",
-    },
-  ];
+  const { data: zoneData, isLoading: zoneLoading, isError: zoneError } = useZone();
+  const zones = useZoneStore((s) => s.state.zone) || [];
 
-  const drivers: Driver[] = [
-    {
-      id: "TR-1234",
-      name: "Michael Johnson",
-      status: "delivering",
-      eta: "ETA 15 min",
-      completed: 8,
-      pending: 3,
-      color: "bg-blue-500",
-    },
-    {
-      id: "TR-1235",
-      name: "Sarah Williams",
-      status: "available",
-      eta: "",
-      completed: 12,
-      pending: 0,
-      color: "bg-green-500",
-    },
-    {
-      id: "TR-1236",
-      name: "David Brown",
-      status: "delivering",
-      eta: "ETA 25 min",
-      completed: 6,
-      pending: 1,
-      color: "bg-blue-500",
-    },
-    {
-      id: "TR-1237",
-      name: "Emma Davis",
-      status: "offline",
-      eta: "",
-      completed: 15,
-      pending: 0,
-      color: "bg-gray-500",
-    },
-  ];
+  useDriver();
+  const drivers = useDriverStore((s) => s.state.drivers);
 
-  const pendingOrders: PendingOrder[] = [
-    {
-      id: "#1238",
-      customer: "John Smith",
-      address: "123 Oak St",
-      time: "2:30 PM",
-      items: "2x 20L",
-    },
-    {
-      id: "#1239",
-      customer: "Acme Corp",
-      address: "456 Business Ave",
-      time: "3:30 PM",
-      items: "10x 20L",
-    },
-    {
-      id: "#1240",
-      customer: "Green Valley School",
-      address: "789 School Ln",
-      time: "5:30 PM",
-      items: "5x 20L",
-    },
-  ];
+  const { state: zoneState } = useZoneStore();
+  const selectedZoneId = zoneState.selectedZoneId;
 
-  const getStatusColor = (status: "delivering" | "available" | "offline"): string => {
-    switch (status) {
-      case "delivering":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "available":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "offline":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+  const [selectedDriver, setSelectedDriver] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+
+  // Fetch customers by selected zone (response matches provided JSON)
+  const {
+    data: customersResponse,
+    isLoading: customersLoading,
+    isError: customersError,
+  } = useCustomerByZone(selectedZoneId);
+
+  const [customers, setCustomers] = useState<EligibleCustomer[]>([]);
+
+  useEffect(() => {
+    if (customersResponse?.success && customersResponse.customers) {
+      setCustomers(customersResponse.customers);
     }
+  }, [customersResponse]);
+
+  useEffect(() => {
+    if (zoneData?.zones) {
+      useZoneStore.getState().setState({ zone: zoneData.zones });
+    }
+  }, [zoneData]);
+
+  const setSelectedZone = (zoneId: string) => {
+    useZoneStore.getState().setState({ selectedZoneId: zoneId });
   };
+
+  /* Bulk Mutation */
+  const { mutate: bulkAssignMutation, isPending: isBulkAssigning } = useBulkAssignDriver();
+
+  const handleBulkAssign = () => {
+
+    const pendingCustomers = customers.filter(c => c.pendingOrdersCount > 0);
+    console.log('pendingCustomers:', pendingCustomers);
+
+    if (pendingCustomers.length === 0 || !selectedDriver || !selectedDate || !selectedZoneId) {
+      console.log('Early return due to missing data:', {
+        pendingCustomersLength: pendingCustomers.length,
+        selectedDriver,
+        selectedDate,
+        selectedZoneId,
+      });
+      return;
+    }
+
+    const customerIds = pendingCustomers.map(c => c.id);
+    const payload = {
+      zoneId: selectedZoneId,
+      driverId: selectedDriver,
+      scheduledDate: selectedDate,
+      customerIds,
+    };
+    console.log('Payload to send:', payload);
+
+    bulkAssignMutation(payload, {
+      onSuccess: (data) => {
+        if (data.success && data.message) {
+          alert(data.message); 
+        }
+      },
+      onError: (error) => {
+        console.error('Mutation error:', error);
+        alert("Failed to assign orders.");
+      },
+    });
+  };
+
+  const stats = [
+    {
+      label: "Total Eligible Customers",
+      value: customersResponse?.totalEligible?.toString() || "0",
+      icon: Users,
+      color: "text-blue-600 bg-blue-50"
+    },
+    {
+      label: "Pending Deliveries",
+      value: customers.reduce((acc, c) => acc + c.pendingOrdersCount, 0).toString(),
+      icon: Truck,
+      color: "text-green-600 bg-green-50"
+    },
+    {
+      label: "Total Pending Amount",
+      value: `Rs ${customers.reduce((acc, c) => acc + c.totalPendingAmount, 0).toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-emerald-600 bg-emerald-50"
+    },
+    // {
+    //   label: "Active Drivers",
+    //   value: "3/4",
+    //   icon: Package,
+    //   color: "text-orange-600 bg-orange-50"
+    // },
+  ];
+
+  const hasPendingOrders = customers.some(c => c.pendingOrdersCount > 0);
 
   return (
     <DefaultLayout>
-      <Breadcrumb
-        pageName="Delivery Operations"
-        description="Real-time tracking & fleet management"
-      />
+      <Breadcrumb pageName="Delivery Operations" description="Real-time tracking & fleet management" />
 
       <div className="px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats */}
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div
-                key={stat.label}
-                className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {stat.label}
-                  </p>
+              <div key={stat.label} className="rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-sm text-gray-600">{stat.label}</p>
                   <Icon className={`h-5 w-5 ${stat.color}`} />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
               </div>
             );
           })}
         </div>
 
-        {/* Main Content Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Active Drivers List */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:col-span-1">
-            <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Active Drivers
-              </h3>
+        {/* Zone Info (from response) */}
+        {customersResponse && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium text-blue-800">Zone: {customersResponse.zone}</p>
+              <p className="text-sm text-gray-600">As of: {customersResponse.asOf}</p>
             </div>
-            <div className="space-y-3 p-6">
-              {drivers.map((driver) => (
-                <div
-                  key={driver.id}
-                  className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+          <div className="border-b bg-gray-50 px-6 py-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+
+              {/* Zone Select (triggers param fetch) */}
+              <div className="w-full sm:w-auto">
+                <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <MapPin className="inline h-4 w-4 mr-2" /> Zone
+                </label>
+
+                {zoneLoading ? (
+                  <p className="text-sm text-gray-500">Loading zones...</p>
+                ) : zoneError ? (
+                  <p className="text-sm text-red-500">Failed to load zones</p>
+                ) : (
+                  <select
+                    value={selectedZoneId || ""}
+                    onChange={(e) => setSelectedZone(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  >
+                    <option value="">Select Zone</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Driver + Date */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <select
+                  value={selectedDriver}
+                  onChange={(e) => setSelectedDriver(e.target.value)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors flex-1"
                 >
-                  <div className="mb-3 flex items-start justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div
-                        className={`h-10 w-10 rounded-full ${driver.color} flex items-center justify-center text-sm font-bold text-white flex-shrink-0`}
-                      >
-                        {driver.id.slice(-2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {driver.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {driver.id}
-                        </p>
-                      </div>
-                    </div>
+                  <option value="">Select Driver</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Customers Cards (minimal data, improved layout) */}
+          <div className="p-6 space-y-4">
+            {customersLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-sm text-gray-500">Loading customers...</p>
+              </div>
+            ) : customersError ? (
+              <p className="text-sm text-red-500 text-center py-8">Failed to load customers</p>
+            ) : customers.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No eligible customers for this zone.</p>
+            ) : (
+              customers.map((customer) => (
+                <div key={customer.id} className="rounded-xl border border-gray-200 p-6 bg-white hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
                     <span
-                      className={`ml-2 inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
-                        driver.status
-                      )}`}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${customer.eligibleToday
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                        }`}
                     >
-                      {driver.status}
+                      {customer.nextEligible}
                     </span>
                   </div>
-                  {driver.eta && (
-                    <p className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-400">
-                      ⏱️ {driver.eta}
-                    </p>
-                  )}
-                  <p className="mb-3 text-xs text-gray-600 dark:text-gray-400">
-                    <span className="font-medium">{driver.completed}</span> completed •{" "}
-                    <span className="font-medium">{driver.pending}</span> pending
-                  </p>
-                  <button className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700">
-                    <Phone size={14} />
-                    Call Driver
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Stats Overview & Quick Actions */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  Avg Delivery Time
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  23 min
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  On-time Rate
-                </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  94%
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  Total Distance
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  127 km
-                </p>
-              </div>
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-gray-600">{customer.phone}</span>
+                    </div>
 
-            {/* Recent Activity */}
-            <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
-              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Recent Deliveries
-                </h3>
-              </div>
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {[1, 2, 3].map((item) => (
-                  <div key={item} className="flex items-center justify-between px-6 py-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0"></div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          Order #{1230 + item}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Completed at 2:{item}5 PM
-                        </p>
+                    <div className="flex items-start">
+                      <MapPin className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium break-words">{customer.address}</span>
+                    </div>
+
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-gray-600">Last: {customer.lastDelivery}</span>
+                    </div>
+
+                    <div className="flex items-center">
+                      <Package className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-gray-600">Empties: {customer.empties}</span>
+                    </div>
+
+                    <div className="flex items-center">
+                      <Check className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-gray-600">Deliverable Bottles: {customer.deliverableBottles}</span>
+                    </div>
+                  </div>
+
+                  {customer.pendingOrdersCount > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium mb-3 text-gray-700">
+                        Pending Orders (Total: Rs {customer.totalPendingAmount.toLocaleString()})
+                      </p>
+                      <div className="space-y-2">
+                        {customer.pendingOrders.map((order) => (
+                          <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg text-sm border">
+                            <span className="font-medium text-gray-900">{order.number}</span>
+                            <span className="text-gray-600">Rs {order.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  </div>
-                ))}
-              </div>
-            </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-        </div>
 
-        {/* Pending Assignments */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Pending Assignment
-            </h3>
-            <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
-              Auto-assign
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
-            {pendingOrders.map((order) => (
-              <div key={order.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-                <div className="mb-3 flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">
-                    {order.id}
-                  </h4>
-                  <div className="h-2 w-2 rounded-full bg-orange-400"></div>
-                </div>
-                <p className="mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                  {order.customer}
-                </p>
-                <p className="mb-3 text-xs text-gray-600 dark:text-gray-400">
-                  📍 {order.address}
-                </p>
-                <div className="mb-3 flex items-center gap-2">
-                  <Clock size={14} className="text-gray-400" />
-                  <span className="text-xs text-gray-600 dark:text-gray-400">
-                    {order.time}
-                  </span>
-                </div>
-                <div className="mb-4 inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                  {order.items}
-                </div>
-                <button className="w-full rounded-lg bg-blue-600 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700">
-                  Assign Driver
-                </button>
-              </div>
-            ))}
-          </div>
+          {hasPendingOrders && (
+            <div className="mt-6 p-6 border-t">
+              <button
+                onClick={handleBulkAssign}
+                disabled={!selectedDriver || !selectedDate || !selectedZoneId || isBulkAssigning}
+                className="w-full disabled:opacity-50 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
+                {isBulkAssigning ? "Assigning..." : "Assign Driver to All Pending Orders"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </DefaultLayout>

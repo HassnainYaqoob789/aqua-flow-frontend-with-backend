@@ -3,12 +3,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Package, Save } from "lucide-react";
+import { ArrowLeft, Package, Save, Box } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import { useCreateCustomer, useCreateInventory } from "@/lib/api/servicesHooks";
+import { useCreateCustomer, useCreateInventory, useProducts } from "@/lib/api/servicesHooks";
+import { useProductStore } from "@/lib/store/useProduct";
 
 interface FormData {
+    productId: string;
     quantity: string;
 }
 
@@ -17,11 +19,16 @@ interface Errors {
 }
 
 export default function AddQuantityPage() {
+    useProducts();
+    const products = useProductStore((state) => state.state.products);
+    console.log("Products in AddQuantityPage:", products);
+
     const createInventoryMutation = useCreateInventory();
 
     const router = useRouter();
 
     const [formData, setFormData] = useState<FormData>({
+        productId: "",
         quantity: "",
     });
     const [errors, setErrors] = useState<Errors>({});
@@ -40,8 +47,25 @@ export default function AddQuantityPage() {
         }
     };
 
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+
+        // Clear error when user selects
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
     const validateForm = (): boolean => {
         const newErrors: Errors = {};
+
+        if (!formData.productId) {
+            newErrors.productId = "Product is required";
+        }
 
         if (!formData.quantity.trim()) {
             newErrors.quantity = "Quantity is required";
@@ -61,21 +85,18 @@ export default function AddQuantityPage() {
         setIsSubmitting(true);
 
         try {
-            // Trigger the mutation with the quantity (convert to number)
+            // Send payload with productId and quantity
             await createInventoryMutation.mutateAsync({
-                // Adjust the payload according to your API expectations
-                // Common patterns:
+                productId: formData.productId,
                 quantity: parseInt(formData.quantity, 10),
-                // OR if your API expects a different shape:
-                // data: { quantity: parseInt(formData.quantity, 10) }
-                // action: "add", etc.
             });
 
             // Success feedback
-            alert(`Successfully added ${formData.quantity} units to inventory!`);
+            const selectedProduct = products.find(p => p.id === formData.productId);
+            alert(`Successfully added ${formData.quantity} units of ${selectedProduct?.name || 'product'} to inventory!`);
 
             // Reset form
-            setFormData({ quantity: "" });
+            setFormData({ productId: "", quantity: "" });
 
             // Optional: navigate back after success
             // router.push("/inventory");
@@ -99,6 +120,9 @@ export default function AddQuantityPage() {
         router.back();
     };
 
+    // Get selected product details for preview
+    const selectedProduct = products.find(p => p.id === formData.productId);
+
     return (
         <DefaultLayout>
             <Breadcrumb
@@ -121,11 +145,43 @@ export default function AddQuantityPage() {
                         Add New Quantity
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Enter the quantity you want to add
+                        Select a product and enter the quantity you want to add
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Product Dropdown */}
+                    <div className="max-w-md">
+                        <label className="mb-3 flex items-center gap-2 text-base font-medium text-black dark:text-white">
+                            <Box className="h-5 w-5 text-blue-600" />
+                            Product *
+                        </label>
+                        <select
+                            name="productId"
+                            value={formData.productId}
+                            onChange={handleSelectChange}
+                            className={`w-full rounded-lg border ${errors.productId ? "border-red-500" : "border-stroke"
+                                } bg-transparent py-4 px-5 text-lg outline-none focus:border-primary transition-colors dark:border-form-strokedark dark:bg-form-input dark:text-white`}
+                        >
+                            <option value="">Select a product</option>
+                            {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                    {product.name} - {product.size} (₨{product.price})
+                                </option>
+                            ))}
+                        </select>
+                        {errors.productId && (
+                            <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
+                                <span>⚠️</span>
+                                {errors.productId}
+                            </p>
+                        )}
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Choose the product for which you want to add quantity
+                        </p>
+                    </div>
+
+                    {/* Quantity Input */}
                     <div className="max-w-md">
                         <label className="mb-3 flex items-center gap-2 text-base font-medium text-black dark:text-white">
                             <Package className="h-5 w-5 text-blue-600" />
@@ -172,15 +228,19 @@ export default function AddQuantityPage() {
                     </div>
                 </form>
 
-                {/* Optional: Display Current Value */}
-                {formData.quantity && !errors.quantity && (
+                {/* Preview */}
+                {formData.productId && formData.quantity && !errors.quantity && selectedProduct && (
                     <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                         <p className="text-sm text-gray-700 dark:text-gray-300">
                             <span className="font-semibold">Preview:</span> You are adding{" "}
                             <span className="font-bold text-blue-600 dark:text-blue-400">
                                 {formData.quantity}
                             </span>{" "}
-                            units to inventory
+                            units of{" "}
+                            <span className="font-bold text-blue-600 dark:text-blue-400">
+                                {selectedProduct.name}
+                            </span>{" "}
+                            to inventory
                         </p>
                     </div>
                 )}

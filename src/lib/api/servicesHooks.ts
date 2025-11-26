@@ -1,5 +1,5 @@
-import { createQueryFactory, createMutationFactory } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory } from "./apiFactory";
+import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
 import { addZone, setZone } from "../store/useZoneStore";
 import { addProducts, setProducts } from "../store/useProduct";
@@ -9,9 +9,9 @@ import { addProducts, setProducts } from "../store/useProduct";
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { Customer, Product, StatusPayload } from "../types/auth";
-import { addDriver, setDrivers } from "../store/useDriver";
-import { addOrder, setOrders } from "../store/useOrder";
+import { AssignDriverPayload, BulkAssignPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, Order, Product, StatusPayload, StatusPayloadDriver } from "../types/auth";
+import { addDriver, setDrivers, status_Driver, useDriverStore } from "../store/useDriver";
+import { addOrder, setOrders, updateOrder } from "../store/useOrder";
 import { setInventory, updateInventory } from "../store/inventoryStore";
 
 export const useLogin = () => {
@@ -71,6 +71,13 @@ export const useCreateZone = createMutationFactory(
 
 
 
+// Update the hook (e.g., in src/lib/api/servicesHooks.ts)
+export const useCustomerByZone = createQueryFactoryWithParams<
+  CustomersByZoneResponse,
+  string
+>("customers-by-zone", getCustomerByZone);
+
+
 
 
 
@@ -113,6 +120,18 @@ export const useDriver = createQueryFactory("drivers", async () => {
   return data;
 });
 
+
+
+// export const useStatusDriver =
+//   createMutationFactory<Driver, StatusPayloadDriver>(
+//     "drivers",
+//     statusDriver,
+//     (data) => status_Driver(data)
+//   );
+
+
+
+
 // =============================================DRIVER HOOKS END=========================
 
 
@@ -135,8 +154,33 @@ export const useOrderStore = createQueryFactory("orders", async () => {
 });
 
 
+export const useAssignDriver = (options?: {
+  onSuccess?: (data: Order) => void;
+  onError?: (error: any) => void;
+}) => {
+  const mutation = createMutationFactory<Order, AssignDriverPayload>(
+    "orders/assign-driver",
+    assignDriver,
+    (data) => {
+      updateOrder(data);
+      options?.onSuccess?.(data);
+    }
+  );
 
-// =============================================ORDERS HOOKS API=========================
+  return mutation;
+};
+
+
+
+
+export const useBulkAssignDriver = createMutationFactory<any, BulkAssignPayload>(
+  "bulk-assign-driver",
+  bulkAssignDriver,
+  (data) => {
+    console.log('onSuccess in mutation factory:', data); 
+  }
+);
+// // =============================================ORDERS HOOKS API=========================
 
 
 
@@ -151,11 +195,10 @@ export const useInventoryStore = createQueryFactory("inventory", async () => {
   return data;
 });
 
-
 export const useCreateInventory = createMutationFactory(
   "inventory",
   createInventory,
-  (data) => updateInventory(data) // since it's a partial patch
+  (data) => updateInventory(data) // data now matches Partial<InventoryResponse>
 );
 
 

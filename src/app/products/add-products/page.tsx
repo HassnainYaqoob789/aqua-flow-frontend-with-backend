@@ -110,11 +110,11 @@ export default function ProductFormPage() {
         if (formData.price <= 0) newErrors.price = "Price must be greater than 0";
 
         // Validate reusable bottle fields
-        if (formData.isReusable) {
-            if (!formData.depositAmount || parseFloat(formData.depositAmount) <= 0) {
-                newErrors.depositAmount = "Deposit amount is required for reusable bottles";
-            }
-        }
+        // if (formData.isReusable) {
+        //     if (!formData.depositAmount || parseFloat(formData.depositAmount) <= 0) {
+        //         newErrors.depositAmount = "Deposit amount is required for reusable bottles";
+        //     }
+        // }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;

@@ -16,6 +16,11 @@ import {
   ZoneResponse,
   InventoryResponse,
   CreateInventoryRequest,
+  StatusPayloadDriver,
+  AssignDriverPayload,
+  Order,
+  BulkAssignPayload,
+  CustomersByZoneResponse,
 } from "@/lib/types/auth";
 import { apiGet, apiPatch, apiPost, apiPut } from "./services/apiMethods";
 import {
@@ -34,8 +39,12 @@ import {
   ORDER_GET_URL,
   INVENTORY_GET_URL,
   INVENTORY_CREATE_URL,
+  CUSTOMER_BY_ZONE_GET_URL,
+  BULK_ASSIGN_DRIVER_URL,
+  DRIVER_PATCH_ASSIGN_URL,
 } from "./services/endpoints";
 import apiClient from "./services/apiClient";
+import { useDriverStore } from "../store/useDriver";
 
 export const loginUser = (payload: LoginRequest) =>
   apiPost<LoginResponse>(LOGIN_URL, payload);
@@ -80,6 +89,33 @@ export const createZone = async (
 
 export const getZones = async (): Promise<ZoneResponse> => {
   return await apiGet<ZoneResponse>(ZONE_GET_URL);
+};
+
+
+
+export const statusDriver = async (
+  payload: StatusPayloadDriver
+): Promise<Driver> => {
+  const { id, status } = payload;
+  return await apiPatch<Driver>(`${DRIVER_PATCH_ASSIGN_URL}/${id}`, { status });
+};
+
+
+
+export const assignDriver = async (
+  payload: AssignDriverPayload
+): Promise<Order> => {
+  const { orderId, driverId } = payload;
+  return await apiPatch<Order>(`${DRIVER_PATCH_ASSIGN_URL}/${orderId}`, { driverId });
+};
+
+
+
+// Update the API function (e.g., in src/lib/api/services.ts or wherever getCustomerByZone is defined)
+export const getCustomerByZone = async (zoneId: string): Promise<CustomersByZoneResponse> => {
+  return await apiGet<CustomersByZoneResponse>(
+    `${CUSTOMER_BY_ZONE_GET_URL}/${zoneId}`
+  );
 };
 
 
@@ -136,6 +172,20 @@ export const getDrivers = async (): Promise<DriverResponse> => {
   return await apiGet<DriverResponse>(DRIVER_GET_URL);
 };
 
+export const bulkAssignDriver = async (
+  payload: BulkAssignPayload
+): Promise<any> => {
+  console.log('bulkAssignDriver called with payload:', payload); // Debug log
+  try {
+    const response = await apiPost(BULK_ASSIGN_DRIVER_URL, payload);
+    console.log('API response:', response); // Debug log
+    return response;
+  } catch (error) {
+    console.error('API error in bulkAssignDriver:', error); // Debug log
+    throw error;
+  }
+};
+
 // =================================DRIVER APIS END================================
 
 
@@ -145,8 +195,8 @@ export const getDrivers = async (): Promise<DriverResponse> => {
 
 export const createOrder = async (
   body: Partial<CreateOrderPayload>
-): Promise<CreateOrderPayload> => {
-  return await apiPost<CreateOrderPayload>(ORDER_CREATE_URL, body);
+): Promise<Order> => {
+  return await apiPost<Order>(ORDER_CREATE_URL, body);
 };
 
 
@@ -168,9 +218,10 @@ export const getInventory = async (): Promise<InventoryResponse> => {
 
 export const createInventory = async (
   body: Partial<CreateInventoryRequest>
-): Promise<CreateInventoryRequest> => {
-  return await apiPost<CreateInventoryRequest>(INVENTORY_CREATE_URL, body);
+): Promise<Partial<InventoryResponse>> => {
+  return await apiPost<Partial<InventoryResponse>>(INVENTORY_CREATE_URL, body);
 };
+
 
 
 

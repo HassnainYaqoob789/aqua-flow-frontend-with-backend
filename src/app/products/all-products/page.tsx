@@ -19,8 +19,8 @@ interface Product {
   createdAt?: string;
   user?: { name: string };
   isReusable: boolean;
+  depositAmount?: number;          // Add this
 }
-
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -55,30 +55,32 @@ export default function ProductsPage() {
     }
   }, [localProducts]);
 
-  // Combine API + local products
-  const products = useMemo(() => {
-    const apiProducts: Product[] =
-      apiResponse?.products?.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        image: p.image,
-        status: p.status,
-        createdAt: p.createdAt,
-        user: p.user,
-        category: p.name.toLowerCase().includes("milk") ? "milk" : "water",
-        size: p.size || extractSizeFromName(p.name),
-      })) || [];
+// Combine API + local products
+const products = useMemo(() => {
+  const apiProducts: Product[] =
+    apiResponse?.products?.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      status: p.status,
+      createdAt: p.createdAt,
+      user: p.user,
+      category: p.name.toLowerCase().includes("milk") ? "milk" : "water",
+      size: p.size || extractSizeFromName(p.name),
+      isReusable: p.isReusable,           // Add this
+      depositAmount: p.depositAmount,     // Add this
+    })) || [];
 
-    const merged = [...apiProducts];
-    localProducts.forEach((local) => {
-      if (!merged.some((m) => m.id === local.id)) {
-        merged.push(local);
-      }
-    });
+  const merged = [...apiProducts];
+  localProducts.forEach((local) => {
+    if (!merged.some((m) => m.id === local.id)) {
+      merged.push(local);
+    }
+  });
 
-    return merged;
-  }, [apiResponse, localProducts]);
+  return merged;
+}, [apiResponse, localProducts]);
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
@@ -191,11 +193,32 @@ export default function ProductsPage() {
                           </p>
                         )}
 
-                        {product.isReusable && (
-                          <p className="text-xs flex items-center gap-1 text-green-600 dark:text-green-400">
-                            <Recycle size={12} /> Reusable
+                        {/* MOBILE VIEW BLOCK */}
+                        <div className="mt-1 space-y-0.5 md:hidden">
+                          {product.size && (
+                            <p className="text-xs text-gray-600 dark:text-gray-300">
+                              <Droplets size={12} className="inline h-3 w-3" /> {product.size}
+                            </p>
+                          )}
+
+                          {product.isReusable && (
+                            <p className="text-xs flex items-center gap-1 text-green-600 dark:text-green-400">
+                              <Recycle size={12} /> Reusable
+                            </p>
+                          )}
+
+                          <p className="text-xs font-semibold text-green-600 dark:text-green-400">
+                            PKR {product.price.toFixed(2)}
                           </p>
-                        )}
+
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                              status
+                            )}`}
+                          >
+                            {status}
+                          </span>
+                        </div>
 
                         <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                           PKR {product.price.toFixed(2)}
@@ -237,6 +260,7 @@ export default function ProductsPage() {
                     </div>
                   </td>
 
+                  {/* REUSABLE COLUMN (DESKTOP) */}
                   {/* REUSABLE COLUMN (DESKTOP) */}
                   <td className="hidden px-3 py-3 text-center sm:px-6 sm:py-4 md:table-cell">
                     {product.isReusable ? (

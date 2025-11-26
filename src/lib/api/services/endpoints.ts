@@ -1,12 +1,12 @@
 // src/lib/config.ts
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
-export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
+// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
 
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/api";
 
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
-// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
+export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
 
 
 export const LOGIN_URL = `${BASE_URL}/auth/login`;
@@ -25,6 +25,11 @@ export const CUSTOMER_PATCH_URL = `${BASE_URL}/customers/status`;
 // ==========================ZONE API ======================
 export const ZONE_CREATE_URL = `${BASE_URL}/zones/create`;
 export const ZONE_GET_URL = `${BASE_URL}/zones/all`;
+
+
+export const CUSTOMER_BY_ZONE_GET_URL = `${BASE_URL}/delivery-operations/customers-by-zone`;
+
+
 // ==========================ZONE API ======================
 
 // ==========================PRODUCTS API ======================
@@ -40,6 +45,18 @@ export const PRODUCTS_GET_URL = `${BASE_URL}/products/all`;
 
 export const DRIVER_CREATE_URL = `${BASE_URL}/drivers/create`;
 export const DRIVER_GET_URL = `${BASE_URL}/drivers/all`;
+
+export const DRIVER_PATCH_ASSIGN_URL = `${BASE_URL}/delivery-operations/assign-driver`;
+
+
+export const BULK_ASSIGN_DRIVER_URL = `${BASE_URL}/delivery-operations/assign-driver`;
+
+
+
+
+
+
+
 
 
 
@@ -66,10 +83,23 @@ export const ORDER_GET_URL = `${BASE_URL}/orders/all`;
 // ==========================INVENTORY API ======================
 
 
-export const INVENTORY_GET_URL = `${BASE_URL}/inventory/bottles`;
-export const INVENTORY_CREATE_URL = `${BASE_URL}/inventory/add-bottles`;
+export const INVENTORY_GET_URL = `${BASE_URL}/inventory/dashboard`;
+export const INVENTORY_CREATE_URL = `${BASE_URL}/inventory/add-stock`;
 
 
 
 
 // ==========================INVENTORY API ======================
+
+
+// =============================== DRIVER STATUS =============================
+
+
+
+
+
+
+
+
+
+

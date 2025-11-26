@@ -26,3 +26,17 @@ export function createMutationFactory<TData, TVariables>(
     });
   };
 }
+
+
+export function createQueryFactoryWithParams<TData, TVariables>(
+  key: string,
+  fetchFn: (variables: TVariables) => Promise<TData>
+) {
+  return (variables: TVariables) =>
+    useQuery<TData>({
+      queryKey: [key, variables],
+      queryFn: () => fetchFn(variables),
+      enabled: !!variables, // only fetch when zoneId exists
+    });
+}
+

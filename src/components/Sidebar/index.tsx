@@ -84,16 +84,16 @@ const menuGroups = [
         label: "Inventory",
         route: "/inventory/all-inventory",
       },
-      {
-        icon: <DollarSign className="h-5 w-5" />,
-        label: "All Expenses",
-        route: "/expenses/all-expenses",
-      },
-      {
-        icon: <FileText className="h-5 w-5" />,
-        label: "Billing & Recoveries",
-        route: "/billing-recoveries",
-      },
+      // {
+      //   icon: <DollarSign className="h-5 w-5" />,
+      //   label: "All Expenses",
+      //   route: "/expenses/all-expenses",
+      // },
+        // {
+        //   icon: <FileText className="h-5 w-5" />,
+        //   label: "Billing & Recoveries",
+        //   route: "/billing-recoveries",
+        // },
 
       {
         icon: <FileText className="h-5 w-5" />,

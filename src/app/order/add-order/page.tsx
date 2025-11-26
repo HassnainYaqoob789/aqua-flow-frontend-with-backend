@@ -17,6 +17,7 @@ import {
   Plus,
   Minus,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import { useCustomers, useDriver, useProducts } from "@/lib/api/servicesHooks";
 import { IMG_URL } from "@/lib/api/services/endpoints";
@@ -24,27 +25,28 @@ import { useProductStore } from "@/lib/store/useProduct";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { useDriverStore } from "@/lib/store/useDriver";
 import { useCreateOrder } from "@/lib/api/servicesHooks";
-import { CreateOrderPayload } from "@/lib/types/auth";
+import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/auth";
 
-interface OrderItem {
-  id: string;
-  name: string;
-  size: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
-
+// interface OrderItem {
+//   id: string;
+//   name: string;
+//   size: string;
+//   quantity: number;
+//   price: number;
+//   image: string;
+//   depositAmount: number;
+// }
 interface FormData {
   customer: string;
   address: string;
-  items: OrderItem[];
-  date: string;           // Only delivery date
-  driver: string;
+  items: FormOrderItem[];
+  date: string;
   zoneId: string;
   amount: string;
   payment: "COD";
+  depositAmountTaking: string;
 }
+
 
 interface Errors {
   [key: string]: string;
@@ -69,21 +71,31 @@ export default function AddOrder() {
     address: "",
     items: [],
     date: "",
-    driver: "",
+    // driver: "",
     zoneId: "",
     amount: "0",
     payment: "COD",
+    depositAmountTaking: "0",
   });
 
   const [errors, setErrors] = useState<Errors>({});
 
-  // Auto-calculate total amount
+  // Calculate total deposit amount from selected products
+  const calculateTotalDeposit = (items: FormOrderItem[]): number => {
+    return items.reduce((sum, item) => sum + item.depositAmount * item.quantity, 0);
+  };
+
+
+  // Auto-calculate total amount (product prices + deposit amount taking)
   useEffect(() => {
-    const total = formData.items
-      .reduce((sum, item) => sum + item.price * item.quantity, 0)
-      .toFixed(2);
+    const productTotal = formData.items
+      .reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
+    const total = (productTotal + depositTaking).toFixed(2);
+
     setFormData((prev) => ({ ...prev, amount: total }));
-  }, [formData.items]);
+  }, [formData.items, formData.depositAmountTaking]);
 
   const handleProductClick = (product: any) => {
     const existing = formData.items.find((i) => i.id === product.id);
@@ -106,6 +118,7 @@ export default function AddOrder() {
             quantity: 1,
             price: product.price,
             image: product.image,
+            depositAmount: product.depositAmount || 0,
           },
         ],
       }));
@@ -143,6 +156,17 @@ export default function AddOrder() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const handleDepositTakingChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string or valid numbers
+    if (value === "" || !isNaN(parseFloat(value))) {
+      setFormData((prev) => ({ ...prev, depositAmountTaking: value }));
+      if (errors.depositAmountTaking) {
+        setErrors((prev) => ({ ...prev, depositAmountTaking: "" }));
+      }
+    }
+  };
+
   const handleCustomerChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const customerId = e.target.value;
     const selectedCustomer = customers.find((c) => c.id === customerId);
@@ -152,7 +176,7 @@ export default function AddOrder() {
       customer: customerId,
       zoneId: selectedCustomer?.zone?.id || "",
       address: selectedCustomer?.address || "",
-      driver: "", // reset driver when customer changes
+      // driver: "",
     }));
 
     setErrors((prev) => ({
@@ -160,7 +184,7 @@ export default function AddOrder() {
       customer: "",
       zoneId: "",
       address: "",
-      driver: "",
+      // driver: "",
     }));
   };
 
@@ -172,19 +196,28 @@ export default function AddOrder() {
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (formData.items.length === 0) newErrors.items = "Add at least one product";
     if (!formData.date) newErrors.date = "Delivery date is required";
-    if (!formData.driver) newErrors.driver = "Driver is required";
+    // if (!formData.driver) newErrors.driver = "Driver is required";
 
     const totalAmount = parseFloat(formData.amount);
     if (!totalAmount || totalAmount <= 0)
       newErrors.amount = "Total amount must be greater than 0";
 
+    const depositTaking = parseFloat(formData.depositAmountTaking);
+    const totalDeposit = calculateTotalDeposit(formData.items);
+    if (totalDeposit > 0 && (isNaN(depositTaking) || depositTaking < 0)) {
+      newErrors.depositAmountTaking = "Enter a valid deposit amount";
+    }
+    if (depositTaking > totalDeposit) {
+      newErrors.depositAmountTaking = `Cannot exceed total deposit (PKR ${totalDeposit.toFixed(2)})`;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // Optional: Warn user if they select Card/Wallet but backend doesn't support it yet
     if (formData.payment !== "COD") {
       const confirmProceed = confirm(
         "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
@@ -193,16 +226,18 @@ export default function AddOrder() {
     }
 
     try {
+      const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
+
       const payload: CreateOrderPayload = {
         customerId: formData.customer,
-        driverId: formData.driver,
-        deliveryDate: formData.date, // YYYY-MM-DD → exactly what backend expects
+        // driverId: formData.driver,
+        deliveryDate: formData.date,
         items: formData.items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
         })),
-        // Only include paymentMethod if it's COD (or force COD always)
         ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
+        ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
       };
 
       console.log("Submitting order:", payload);
@@ -214,13 +249,14 @@ export default function AddOrder() {
         address: "",
         items: [],
         date: "",
-        driver: "",
+        // driver: "",
         zoneId: "",
         amount: "0",
         payment: "COD",
+        depositAmountTaking: "0",
       });
 
-      setErrors({}); 
+      setErrors({});
     } catch (err: any) {
       console.error("Order creation failed:", err);
       alert(err?.message || "Failed to create order. Please try again.");
@@ -229,6 +265,8 @@ export default function AddOrder() {
 
   const totalItems = formData.items.reduce((s, i) => s + i.quantity, 0);
   const totalAmount = parseFloat(formData.amount) || 0;
+  const totalDeposit = calculateTotalDeposit(formData.items);
+  const productTotal = formData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <DefaultLayout>
@@ -293,6 +331,7 @@ export default function AddOrder() {
                         : ""
                     }
                     className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                    readOnly
                   />
                   {errors.zoneId && (
                     <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>
@@ -352,6 +391,11 @@ export default function AddOrder() {
                         <p className="mt-1 text-sm font-semibold">
                           PKR {p.price.toFixed(2)}
                         </p>
+                        {p.depositAmount && p.depositAmount > 0 && (
+                          <p className="mt-1 text-xs text-orange-600 dark:text-orange-400 font-medium">
+                            +PKR {p.depositAmount} deposit
+                          </p>
+                        )}
                       </button>
                     );
                   })}
@@ -370,6 +414,7 @@ export default function AddOrder() {
                           <th className="py-3 px-4 text-left text-sm font-medium">Product</th>
                           <th className="py-3 px-4 text-center text-sm font-medium">Qty</th>
                           <th className="py-3 px-4 text-center text-sm font-medium">Price</th>
+                          <th className="py-3 px-4 text-center text-sm font-medium">Deposit</th>
                           <th className="py-3 px-4 text-center text-sm font-medium">Total</th>
                           <th className="py-3 px-4 text-center text-sm font-medium">Action</th>
                         </tr>
@@ -414,6 +459,15 @@ export default function AddOrder() {
                             <td className="py-3 px-4 text-center">
                               PKR {item.price.toFixed(2)}
                             </td>
+                            <td className="py-3 px-4 text-center">
+                              {item.depositAmount > 0 ? (
+                                <span className="text-orange-600 dark:text-orange-400 font-medium">
+                                  PKR {(item.depositAmount * item.quantity).toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4 text-center font-medium text-blue-600 dark:text-blue-400">
                               PKR {(item.price * item.quantity).toFixed(2)}
                             </td>
@@ -432,12 +486,23 @@ export default function AddOrder() {
                     </table>
 
                     <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t dark:border-gray-700">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total Amount:</span>
-                        <span>PKR {totalAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Total Items: {totalItems}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Product Total:</span>
+                          <span className="font-medium">PKR {productTotal.toFixed(2)}</span>
+                        </div>
+                        {totalDeposit > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Total Deposit Available:</span>
+                            <span className="font-medium text-orange-600 dark:text-orange-400">
+                              PKR {totalDeposit.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                          <span>Total Items:</span>
+                          <span>{totalItems}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -461,9 +526,9 @@ export default function AddOrder() {
                 )}
               </div>
 
-              {/* Driver & Amount */}
+              {/* Driver & Deposit Section */}
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
+                {/* <div>
                   <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <Truck className="h-4 w-4" /> Driver *
                   </label>
@@ -491,23 +556,69 @@ export default function AddOrder() {
                   {errors.driver && (
                     <p className="mt-1 text-xs text-red-500">{errors.driver}</p>
                   )}
-                </div>
+                </div> */}
 
-                <div>
+                {totalDeposit > 0 && (
+                  <div>
+                    <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                      <Wallet className="h-4 w-4" /> Total Deposit Amount (PKR)
+                    </label>
+                    <input
+                      type="text"
+                      value={totalDeposit.toFixed(2)}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-orange-600 dark:text-orange-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Auto-calculated from selected products
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Deposit Taking Amount */}
+              {totalDeposit > 0 && (
+                <div className="mt-6">
                   <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <DollarSign className="h-4 w-4" /> Total Amount (PKR)
+                    <DollarSign className="h-4 w-4" /> Deposit Amount Taking (PKR) *
+                    <span className="text-xs text-gray-500 font-normal">
+                      (Max: PKR {totalDeposit.toFixed(2)})
+                    </span>
                   </label>
                   <input
-                    type="text"
-                    value={totalAmount.toFixed(2)}
-                    readOnly
-                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-lg font-bold cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                    type="number"
+                    name="depositAmountTaking"
+                    value={formData.depositAmountTaking}
+                    onChange={handleDepositTakingChange}
+                    min="0"
+                    max={totalDeposit}
+                    step="0.01"
+                    placeholder="0.00"
+                    className={`w-full max-w-xs rounded-lg border ${errors.depositAmountTaking ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
                   />
+                  {errors.depositAmountTaking && (
+                    <p className="mt-1 text-xs text-red-500">{errors.depositAmountTaking}</p>
+                  )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Auto-calculated
+                    Enter the deposit amount you're collecting from the customer
                   </p>
                 </div>
+              )}
 
+              {/* Total Amount */}
+              <div className="mt-6">
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                  <DollarSign className="h-4 w-4" /> Total Amount (PKR)
+                </label>
+                <input
+                  type="text"
+                  value={totalAmount.toFixed(2)}
+                  readOnly
+                  className="w-full max-w-xs rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-lg font-bold cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Product Total + Deposit Taking = PKR {productTotal.toFixed(2)} + PKR {parseFloat(formData.depositAmountTaking || "0").toFixed(2)}
+                </p>
               </div>
 
               {/* Payment Method */}
@@ -519,7 +630,7 @@ export default function AddOrder() {
                   name="payment"
                   value={formData.payment}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="COD">Cash on Delivery</option>
                 </select>

@@ -18,5 +18,16 @@ export const addDriver = (driver: Driver) =>
     drivers: [...useDriverStore.getState().state.drivers, driver],
   });
 
+export const status_Driver = (driver: Driver) => {
+  const { state, setState } = useDriverStore.getState();
+
+  setState({
+    drivers: state.drivers.map((d) =>
+      d.id === driver.id ? driver : d
+    ),
+  });
+};
+
+
 export const clearDrivers = () =>
   useDriverStore.getState().resetState();

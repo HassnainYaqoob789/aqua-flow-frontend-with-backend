@@ -18,7 +18,7 @@ import {
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
-import { useDriver } from "@/lib/api/servicesHooks";
+import { useDriver, useOrderStore } from "@/lib/api/servicesHooks";
 
 interface Zone {
   name: string;
@@ -55,7 +55,10 @@ interface DriverResponse {
 }
 
 export default function DriverRouteManagement() {
+
   const { data, isLoading, isError } = useDriver();
+
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -248,7 +251,7 @@ export default function DriverRouteManagement() {
                   Performance
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Status
+                  Mode
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Actions

@@ -34,7 +34,7 @@ export interface Customer {
   status: "active" | "inactive" | "sleeping" | "overdue";
   createdAt: string;
 
-zone?: {
+  zone?: {
     id: string;
     name: string;
   } | null;
@@ -71,6 +71,40 @@ export interface StatusPayload {
   status: Customer["status"];
 }
 
+// Add these new interfaces to your types file (e.g., src/lib/types/auth.ts or a dedicated delivery.ts)
+// Place them in a new section, e.g., // ==========================
+// DELIVERY OPERATIONS
+// ==========================
+
+export interface PendingOrder {
+  id: string;
+  number: string;
+  amount: number;
+}
+
+export interface EligibleCustomer {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  empties: number;
+  deliverableBottles: number;
+  pendingOrdersCount: number;
+  totalPendingAmount: number;
+  pendingOrders: PendingOrder[];
+  lastDelivery: string;
+  nextEligible: string;
+  eligibleToday: boolean;
+}
+
+export interface CustomersByZoneResponse {
+  success: boolean;
+  zone: string;
+  totalEligible: number;
+  asOf: string;
+  customers: EligibleCustomer[];
+}
+
 // ==========================
 // ZONES
 // ==========================
@@ -104,6 +138,8 @@ export interface Product {
   image?: string;
   status: "active" | "inactive";
   createdAt: string;
+  isReusable?: boolean; // Add this field if missing
+  depositAmount?: number; // Add this for security deposit per product
 }
 
 export interface ProductResponse {
@@ -125,12 +161,13 @@ export interface Driver {
   contact: string;
   vehicleId: string;
   zoneId?: string | null;
-  status: "active" | "inactive";
+  status: "active" | "inactive"; // <-- THIS is good
   createdAt: string;
 
-  rating?: number | null;          // average rating (e.g. 4.8)
+  rating?: number | null;
   totalTrips?: number | null;
 }
+
 
 export interface DriverResponse {
   drivers: Driver[];
@@ -142,21 +179,38 @@ export interface DriverResponse {
   };
 }
 
+
+export interface StatusPayloadDriver {
+  id: string;
+  status: Driver["status"]; // "active" | "inactive"
+}
+
+
 // ==========================
 // ORDERS
-// ==========================
-export interface orderItems {
-  productId: string;
+export interface FormOrderItem {
+  id: string;
+  name: string;
+  size: string;
   quantity: number;
+  price: number;
+  image: string;
+  depositAmount: number;
 }
+
 
 export interface CreateOrderPayload {
   customerId: string;
-  driverId: string;
-  deliveryDate: string; // ISO string
-  items: orderItems[];
-paymentMethod?: "cash_on_delivery";
+  driverId?: string;
+  deliveryDate: string;
+  items: {
+    productId: string;
+    quantity: number;
+  }[];
+  paymentMethod?: "cash_on_delivery";
+  acceptableDepositAmount?: number;
 }
+
 
 // Response types for Get Orders
 export interface OrderItemProduct {
@@ -172,6 +226,19 @@ export interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   product: OrderItemProduct;
+}
+
+export interface BulkAssignPayload {
+  zoneId: string;
+  driverId: string;
+  scheduledDate: string;
+  customerIds: string[];
+}
+
+
+export interface AssignDriverPayload {
+  orderId: string;
+  driverId: string | null;
 }
 
 export interface CustomerInfo {
@@ -217,6 +284,8 @@ export interface OrderStats {
   in_progress: number;
   delivered: number;
   cancelled: number;
+  completed?: number; // optional
+
 }
 
 export interface PaginationInfo {
@@ -231,8 +300,21 @@ export interface GetOrdersResponse {
   stats: OrderStats;
   pagination: PaginationInfo;
 }
-
-
+export interface GlobalReusablePool {
+  totalPurchased: number;
+  inStock: number;
+  withCustomers: number;
+  damaged: number;
+  lost: number;
+  repairable: number;
+  leaked: number;
+}
+export interface ProductInventory {
+  currentStock: number;
+  totalAdded: number;
+  totalSold: number;
+  product: Product;
+}
 
 export interface InventoryResponse {
   totalBottles: number;
@@ -244,13 +326,23 @@ export interface InventoryResponse {
   lowStockMessage: string | null;
   bottleStockLevels: BottleStockLevel[];
   recentTransactions: RecentTransaction[];
-  emptiesTracking: EmptiesTracking[];
+  emptiesTracking: EmptiesTracking[]; // Update type
+  productInventories: ProductInventory[]; // Add this
+  globalReusablePool: GlobalReusablePool; // Add this
+}
+export interface EmptiesTrackingItem {
+  customerName: string;
+  lastReturn: string;
+  pendingReturn: number;
+  securityDeposit: number;
 }
 
 export interface BottleStockLevel {
-  [key: string]: any;
+  productName: string;
+  size: string;
+  available: number;
+  isLow: boolean;
 }
-
 export interface RecentTransaction {
   customerName: string;
   driverName: string;
