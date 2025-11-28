@@ -19,6 +19,24 @@ export const addZone = (zone: Zone) =>
     zone: [...useZoneStore.getState().state.zone, zone],
   });
 
+export const update_Zone = (zone: Zone) => {
+  const { state, setState } = useZoneStore.getState();
+  setState({
+    zone: state.zone.map((c) =>
+      c.id === zone.id ? zone : c
+    ),
+  });
+};
+
+export const delete_Zone = (zone: Zone) => {
+  const { state, setState } = useZoneStore.getState();
+  setState({
+    zone: state.zone.filter((c) =>  // Fixed: Filter to remove, not map to same
+      c.id !== zone.id
+    ),
+  });
+};
+
 // Optional: Add a helper to update selectedZoneId (matches your component's usage pattern)
 export const setSelectedZoneId = (zoneId: string) =>
   useZoneStore.getState().setState({ selectedZoneId: zoneId });

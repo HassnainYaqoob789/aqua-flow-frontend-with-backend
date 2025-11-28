@@ -28,6 +28,15 @@ export const status_Driver = (driver: Driver) => {
   });
 };
 
+export const update_Driver = (driver: Driver) => {
+  const { state, setState } = useDriverStore.getState();
+  setState({
+    drivers: state.drivers.map((c) =>
+      c.id === driver.id ? driver : c
+    ),
+  });
+};
+
 
 export const clearDrivers = () =>
   useDriverStore.getState().resetState();

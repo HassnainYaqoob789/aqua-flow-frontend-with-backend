@@ -1,6 +1,21 @@
 // ==========================
 // AUTH
 // ==========================
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+}
+
+export interface ToastContextType {
+  showSuccess: (message: string, duration?: number) => void;
+  showError: (message: string, duration?: number) => void;
+  showWarning: (message: string, duration?: number) => void;
+  showInfo: (message: string, duration?: number) => void;
+}
 export interface LoginRequest {
   email: string;
   password: string;
@@ -360,4 +375,32 @@ export interface EmptiesTracking {
 export interface CreateInventoryRequest {
   quantity: number;
   [key: string]: any;
+}
+
+
+export type UserRole = "company_user" | "company_admin";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  createdAt: string;
+  // optional fields
+  password?: string;
+  address?: string | null;
+  logo?: string | null;
+  otp?: string | null;
+  tenantId?: string;
+  lastActivity?: string;
+  updatedAt?: string;
+}
+export interface CreateUserResponse {
+  message: string;
+  user: User;
+}
+
+export interface GetUsersResponse {
+  users: User[];
 }

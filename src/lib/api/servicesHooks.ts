@@ -1,7 +1,7 @@
 import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver } from "./apiFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
-import { addZone, setZone } from "../store/useZoneStore";
+import { addZone, delete_Zone, setZone, update_Zone } from "../store/useZoneStore";
 import { addProducts, setProducts } from "../store/useProduct";
 
 
@@ -9,17 +9,22 @@ import { addProducts, setProducts } from "../store/useProduct";
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { AssignDriverPayload, BulkAssignPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, Order, Product, StatusPayload, StatusPayloadDriver } from "../types/auth";
-import { addDriver, setDrivers, status_Driver, useDriverStore } from "../store/useDriver";
+import { AssignDriverPayload, BulkAssignPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/auth";
+import { addDriver, setDrivers, status_Driver, update_Driver, useDriverStore } from "../store/useDriver";
 import { addOrder, setOrders, updateOrder } from "../store/useOrder";
 import { setInventory, updateInventory } from "../store/inventoryStore";
+import { useToastStore } from '../store/toastStore';
+import { addUser, setUsers } from "../store/useUserStore";
 
 export const useLogin = () => {
   const router = useRouter();
 
   return createMutationFactory("auth", loginUser, (data) => {
+    console.log("🔥 Login API Response:", data);
     setAuth(data);
-    router.replace("/");
+    setTimeout(() => {
+      router.replace("/");
+    }, 500);
   })();
 };
 
@@ -68,6 +73,22 @@ export const useCreateZone = createMutationFactory(
   createZone,
   (data) => addZone(data)
 );
+
+
+export const useUpdateZone = createMutationFactory(
+  "zones",
+  updateZone,
+  (data) => update_Zone(data)
+);
+
+
+export const useDeleteZone = createMutationFactory<Zone, string>(
+  "zones",
+  deleteZone,
+  (data) => delete_Zone(data) 
+);
+
+
 
 
 
@@ -119,6 +140,13 @@ export const useDriver = createQueryFactory("drivers", async () => {
   setDrivers(data.drivers);
   return data;
 });
+
+
+export const useUpdateDriver = createMutationFactory(
+  "driver",
+  updateDriver,
+  (data) => update_Driver(data)
+);
 
 
 
@@ -177,7 +205,7 @@ export const useBulkAssignDriver = createMutationFactory<any, BulkAssignPayload>
   "bulk-assign-driver",
   bulkAssignDriver,
   (data) => {
-    console.log('onSuccess in mutation factory:', data); 
+    console.log('onSuccess in mutation factory:', data);
   }
 );
 // // =============================================ORDERS HOOKS API=========================
@@ -200,19 +228,28 @@ export const useCreateInventory = createMutationFactory(
   createInventory,
   (data) => updateInventory(data) // data now matches Partial<InventoryResponse>
 );
-
-
-
-
-
-
-
-
-
-
 // =============================================INVENTORY HOOKS API=========================
 
 
+
+// ===========================================USER HOOKS API=============================
+export const useCreateUser = createMutationFactory(
+  "users",
+  createUser,
+  (data) => addUser(data.user)
+);
+
+export const useUsers = createQueryFactory("users", async () => {
+  const data = await getUsers();
+  setUsers(data.users); // ✅ sets store properly
+  return data;
+});
+
+
+
+
+
+// ============================================USER HOOK API==================================
 
 
 

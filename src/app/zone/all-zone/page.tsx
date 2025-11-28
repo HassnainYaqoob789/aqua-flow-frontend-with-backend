@@ -10,21 +10,27 @@ import {
   Send,
   Download,
   MapPin,
+  Edit,
+  Trash2, // Add Trash2 for delete icon if desired
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
 import { useZone } from "@/lib/api/servicesHooks";
+import { useDeleteZone } from "@/lib/api/servicesHooks"; // Adjust path; assuming same file as useZone
 import { setZone } from "@/lib/store/useZoneStore";
 import { Zone } from "@/lib/types/auth";
 
 export default function ZoneManagement() {
   const { data: dataaa, isLoading, isError } = useZone();
+  const deleteZoneHook = useDeleteZone(); // Fixed: Call the hook
+  const { mutate: deleteZoneMutate, isPending: isDeleting } = deleteZoneHook;
 
   // Use React Query data directly
   const zones: Zone[] = dataaa?.zones || [];
 
   const [activeTab, setActiveTab] = useState("All");
+  const [confirmDelete, setConfirmDelete] = useState<Zone | null>(null); // New: For delete confirmation
 
   const handleStatusToggle = (zoneId: string) => {
     const updatedZones = zones.map((zone) => {
@@ -37,6 +43,23 @@ export default function ZoneManagement() {
 
     // Update Zustand store so data persists
     setZone(updatedZones);
+  };
+
+  const handleDelete = (zone: Zone) => {
+    setConfirmDelete(zone);
+  };
+
+  const confirmDeleteZone = () => {
+    if (!confirmDelete) return;
+    deleteZoneMutate(confirmDelete.id, {
+      onSuccess: () => {
+        setConfirmDelete(null);
+        // Optional: Additional local cleanup if needed (query invalidates automatically)
+      },
+      onError: () => {
+        setConfirmDelete(null);
+      },
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -127,7 +150,7 @@ export default function ZoneManagement() {
         {/* Header */}
         <div className="border-b border-gray-200 bg-white px-3 py-4 dark:border-gray-700 dark:bg-gray-800 sm:px-6 sm:py-8">
           <div className="flex justify-end">
-            <Link href="/zone/add-zone" className="sm:ml-auto">
+            <Link href="/zone/new" className="sm:ml-auto">
               <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto">
                 <Plus size={20} />
                 Add Zone
@@ -180,8 +203,8 @@ export default function ZoneManagement() {
                 key={idx}
                 onClick={() => setActiveTab(tab.split(" ")[0])}
                 className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === tab.split(" ")[0]
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                   }`}
               >
                 {tab}
@@ -230,10 +253,22 @@ export default function ZoneManagement() {
                       </td>
                       <td className="px-3 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center justify-center gap-1 sm:gap-2">
-                          <button onClick={() => handleStatusToggle(zone.id)} className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                            <Eye size={16} className="sm:size-[18px]" />
-                          </button>
-                          <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                          <Link href={`/zone/${zone.id}`}>
+                            <button
+                              className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                              <Edit size={16} className="sm:size-[18px]" />
+                            </button>
+                          </Link>
+                          {/* Fixed: MoreVertical now triggers delete confirm */}
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(zone);
+                            }}
+                            className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                            title="Delete zone"
+                          >
                             <MoreVertical size={16} className="sm:size-[18px]" />
                           </button>
                         </div>
@@ -252,6 +287,39 @@ export default function ZoneManagement() {
               </div>
             )}
           </div>
+
+          {/* Delete Confirmation Modal */}
+          {confirmDelete && (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" 
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setConfirmDelete(null);
+              }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Delete Zone</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Are you sure you want to delete <strong>&quot;{confirmDelete.name}&quot;</strong>? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button 
+                    onClick={() => setConfirmDelete(null)} 
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={confirmDeleteZone}
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Alert Banner */}
           {activeTab === "Inactive" && filteredZones.length > 0 && (

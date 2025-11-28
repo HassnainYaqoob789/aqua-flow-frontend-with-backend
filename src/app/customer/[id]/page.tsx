@@ -5,8 +5,8 @@ import { useParams } from "next/navigation";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useCreateCustomer, useUpdateCustomer } from "@/lib/api/servicesHooks";
-// import { useCustomerStore } from "@/lib/store/useCustomerStore"; // if you want to prefill from store
-// import type { Customer } from "@/lib/types/customer";
+import { useCustomerStore } from "@/lib/store/useCustomerStore";
+import { Customer } from "@/lib/types/auth";
 import { useRouter } from "next/navigation";
 
 export default function CustomerFormPage() {
@@ -19,6 +19,8 @@ export default function CustomerFormPage() {
 
   const createCustomerMutation = useCreateCustomer();
   const updateCustomerMutation = useUpdateCustomer();
+
+  const { state } = useCustomerStore(); // Get the store state
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,26 +35,29 @@ export default function CustomerFormPage() {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Optional: If you have customers in Zustand and want to prefill in edit mode
-  // const { state } = useCustomerStore();
-  // useEffect(() => {
-  //   if (!isCreateMode) {
-  //     const customer = state.customers.find((c) => c.id === id);
-  //     if (customer) {
-  //       setFormData((prev) => ({
-  //         ...prev,
-  //         name: customer.name ?? "",
-  //         email: customer.email ?? "",
-  //         phone: customer.phone ?? "",
-  //         address: customer.address ?? "",
-  //         city: customer.city ?? "",
-  //         postalCode: customer.postalCode ?? "",
-  //         country: customer.country ?? "",
-  //         password: "", // we never prefill password
-  //       }));
-  //     }
-  //   }
-  // }, [id, isCreateMode, state.customers]);
+  // Prefill form with customer from store when in edit mode
+  useEffect(() => {
+    if (!isCreateMode) {
+      const customer = state.customers.find((c) => c.id === id);
+      if (customer) {
+        setFormData((prev) => ({
+          ...prev,
+          name: customer.name ?? "",
+          email: customer.email ?? "",
+          phone: customer.phone ?? "",
+          address: customer.address ?? "",
+          city: customer.city ?? "",
+          postalCode: customer.postalCode ?? "",
+          country: customer.country ?? "",
+          password: "", // Never prefill password for security
+        }));
+      } else {
+        // Optional: Handle case where customer not found in store (e.g., data not loaded yet or deleted)
+        console.warn(`Customer with ID ${id} not found in store.`);
+        // Could redirect back or show error, but assuming list page loaded it
+      }
+    }
+  }, [id, isCreateMode, state.customers]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,7 +69,7 @@ export default function CustomerFormPage() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) newErrors.name = "First name is required";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = "Valid email is required";
@@ -92,33 +97,51 @@ export default function CustomerFormPage() {
 
     if (!validateForm()) return;
 
-    updateCustomerMutation.mutate(
-      {
-        id,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
-        country: formData.country,
-      },
-      {
-        onSuccess: () => {
-          console.log("Customer updated successfully!");
-          router.push("/customer/all-customers");
+    if (isCreateMode) {
+      // Handle CREATE (includes password)
+      createCustomerMutation.mutate(
+        {
+          ...formData, // Assumes your API payload includes all fields incl. password
         },
-
-        onError: (err: any) => {
-          alert(
-            `Failed to update customer: ${err?.response?.data?.message || err?.message || "Unknown error"
-            }`
-          );
+        {
+          onSuccess: () => {
+            console.log("Customer created successfully!");
+            router.push("/customer/all-customers");
+          },
+          onError: (err: any) => {
+            alert(
+              `Failed to create customer: ${err?.response?.data?.message || err?.message || "Unknown error"}`
+            );
+          },
+        }
+      );
+    } else {
+      // Handle UPDATE (excludes password)
+      updateCustomerMutation.mutate(
+        {
+          id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country,
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            console.log("Customer updated successfully!");
+            router.push("/customer/all-customers");
+          },
+          onError: (err: any) => {
+            alert(
+              `Failed to update customer: ${err?.response?.data?.message || err?.message || "Unknown error"}`
+            );
+          },
+        }
+      );
+    }
   };
-
 
   return (
     <DefaultLayout>
@@ -133,7 +156,7 @@ export default function CustomerFormPage() {
 
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => router.push("/customer/all-customers")}
           className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-gray-600 hover:bg-gray-200 dark:bg-meta-4 dark:text-white dark:hover:bg-meta-3"
         >
           <ArrowLeft size={20} />
@@ -143,7 +166,7 @@ export default function CustomerFormPage() {
 
       <div className="rounded-sm border border-stroke bg-white px-6 py-8 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Full Name + Password (password only meaningful in create mode) */}
+          {/* Name + Password */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
@@ -155,9 +178,10 @@ export default function CustomerFormPage() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Enter first name"
-                className={`w-full rounded-lg border ${errors.name ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                placeholder="Enter name"
+                className={`w-full rounded-lg border ${
+                  errors.name ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
@@ -173,10 +197,11 @@ export default function CustomerFormPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder={
-                  isCreateMode ? "Enter your password" : "Leave blank to keep unchanged"
+                  isCreateMode ? "Enter password" : "Leave blank to keep unchanged"
                 }
-                className={`w-full rounded-lg border ${errors.password ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.password ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-500">{errors.password}</p>
@@ -197,8 +222,9 @@ export default function CustomerFormPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter email address"
-                className={`w-full rounded-lg border ${errors.email ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.email ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
@@ -214,8 +240,9 @@ export default function CustomerFormPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter phone number"
-                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.phone ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
             </div>
@@ -233,8 +260,9 @@ export default function CustomerFormPage() {
               value={formData.address}
               onChange={handleChange}
               placeholder="Enter full street address"
-              className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"
-                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+              className={`w-full rounded-lg border ${
+                errors.address ? "border-red-500" : "border-stroke"
+              } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             />
             {errors.address && (
               <p className="mt-1 text-xs text-red-500">{errors.address}</p>
@@ -253,8 +281,9 @@ export default function CustomerFormPage() {
                 value={formData.city}
                 onChange={handleChange}
                 placeholder="Enter city"
-                className={`w-full rounded-lg border ${errors.city ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.city ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city}</p>}
             </div>
@@ -269,8 +298,9 @@ export default function CustomerFormPage() {
                 value={formData.postalCode}
                 onChange={handleChange}
                 placeholder="Enter postal code"
-                className={`w-full rounded-lg border ${errors.postalCode ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.postalCode ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.postalCode && (
                 <p className="mt-1 text-xs text-red-500">{errors.postalCode}</p>
@@ -288,8 +318,9 @@ export default function CustomerFormPage() {
                 value={formData.country}
                 onChange={handleChange}
                 placeholder="Enter country"
-                className={`w-full rounded-lg border ${errors.country ? "border-red-500" : "border-stroke"
-                  } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                className={`w-full rounded-lg border ${
+                  errors.country ? "border-red-500" : "border-stroke"
+                } bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
               />
               {errors.country && (
                 <p className="mt-1 text-xs text-red-500">{errors.country}</p>
@@ -301,7 +332,8 @@ export default function CustomerFormPage() {
           <div className="pt-4">
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500"
+              disabled={createCustomerMutation.isPending || updateCustomerMutation.isPending}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500"
             >
               <Save size={20} />
               {isCreateMode ? "Add Customer" : "Update Customer"}

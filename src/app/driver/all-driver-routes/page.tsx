@@ -14,6 +14,7 @@ import {
   Wifi,
   Eye,
   Loader2,
+  Edit,
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
@@ -131,25 +132,21 @@ export default function DriverRouteManagement() {
     <DefaultLayout>
       <Breadcrumb
         pageName="Driver & Route Management"
-        description="Manage delivery fleet, routes, and schedules"
+        description="Manage delivery routes, and schedules"
       />
-
-      {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="block sm:hidden">
           <h2 className="text-xl font-semibold text-black dark:text-white">
             Driver & Route Management
           </h2>
         </div>
-        <Link href="/driver/add-driver" className="sm:ml-auto">
+        <Link href="/driver/add" className="sm:ml-auto">
           <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto">
             <Plus size={20} />
             Add Driver
           </button>
         </Link>
       </div>
-
-      {/* Search and Filters */}
       <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <Search
@@ -180,8 +177,6 @@ export default function DriverRouteManagement() {
           </button>
         </div>
       </div>
-
-      {/* Stats Cards */}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 lg:grid-cols-4">
         <div className="relative rounded-sm border border-stroke bg-white px-4 py-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-6">
           <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
@@ -216,20 +211,7 @@ export default function DriverRouteManagement() {
             <Truck size={16} />
           </div>
         </div>
-        {/* <div className="relative rounded-sm border border-stroke bg-white px-4 py-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-6">
-          <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-            Active Routes
-          </p>
-          <p className="text-2xl font-bold text-purple-600 sm:text-3xl">
-            {stats.activeRoutes}
-          </p>
-          <div className="absolute right-3 top-3 text-purple-400">
-            <MapPin size={16} />
-          </div>
-        </div> */}
       </div>
-
-      {/* Drivers Table - Desktop */}
       <div className="hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark lg:block">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
@@ -334,9 +316,14 @@ export default function DriverRouteManagement() {
                     </td>
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       <div className="flex items-center gap-2">
-                        <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-                          <Eye size={18} />
-                        </button>
+                        <Link href={`/driver/${driver.id}`}>
+                          <button
+                            className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
+                          >
+                            <Edit size={16} className="sm:size-[18px]" />
+                          </button>
+                        </Link>
+
                         <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
                           <MoreVertical size={18} />
                         </button>
@@ -349,8 +336,6 @@ export default function DriverRouteManagement() {
           </table>
         </div>
       </div>
-
-      {/* Drivers Cards - Mobile & Tablet */}
       <div className="space-y-3 sm:space-y-4 lg:hidden">
         {filteredDrivers.length === 0 ? (
           <div className="rounded-sm border border-stroke bg-white p-8 text-center shadow-default dark:border-strokedark dark:bg-boxdark">

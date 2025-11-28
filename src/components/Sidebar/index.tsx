@@ -16,7 +16,8 @@ import {
   DollarSign,
   Warehouse,
   FileText,
-  PackageSearch
+  PackageSearch,
+  Settings 
 } from "lucide-react";
 
 interface SidebarProps {
@@ -99,6 +100,16 @@ const menuGroups = [
         icon: <FileText className="h-5 w-5" />,
         label: "Reports",
         route: "/reports",
+      },
+    ],
+  },
+  {
+    name: "SETTING",
+    menuItems: [
+      {
+        icon: <Settings  className="h-5 w-5" />,
+        label: "Users",
+        route: "/users/all-users",
       },
     ],
   },

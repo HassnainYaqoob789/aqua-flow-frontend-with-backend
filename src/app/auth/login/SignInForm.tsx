@@ -1,13 +1,16 @@
-// src/app/auth/signin/SignInForm.tsx
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
 import loginBgImage from "../../../../public/images/loginImageBackground.png";
 import { Droplet } from "lucide-react";
 import { useLogin } from "@/lib/api/servicesHooks";
+// import { useToast } from "@/lib/hooks/useToast";
+import { useToast } from "@/lib/hooks";
 
-const   SignInForm = () => {
+
+const SignInForm = () => {
   const { mutate, isPending } = useLogin();
+  const { showError } = useToast();
   const [form, setForm] = useState({ email: "", password: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -16,6 +19,18 @@ const   SignInForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!form.email || !form.password) {
+      showError('Please fill in all fields');
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      showError('Please enter a valid email address');
+      return;
+    }
+
     mutate(form);
   };
 
@@ -41,7 +56,7 @@ const   SignInForm = () => {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
-                className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300"
+                className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300 focus:border-blue-400 focus:outline-none transition-colors"
               />
             </div>
 
@@ -53,14 +68,14 @@ const   SignInForm = () => {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300"
+                className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300 focus:border-blue-400 focus:outline-none transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-lg p-4 font-medium text-white"
+              className="w-full rounded-lg p-4 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: "#1C2434" }}
             >
               {isPending ? "Logging in..." : "Log In"}

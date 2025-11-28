@@ -159,7 +159,7 @@ export default function DeliveryOperations() {
 
   return (
     <DefaultLayout>
-      <Breadcrumb pageName="Delivery Operations" description="Real-time tracking & fleet management" />
+      <Breadcrumb pageName="Delivery Operations" description="" />
 
       <div className="px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats */}
