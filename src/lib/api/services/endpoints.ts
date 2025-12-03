@@ -1,19 +1,19 @@
 // src/lib/config.ts
 
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
-// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
+export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
 
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/api";
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
-export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
+// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
 
 export const LOGIN_URL = `${BASE_URL}/auth/login`;
 
 // ====================CUSTOMER APIS=========================
-export const CUSTOMER_CREATE_URL = `${BASE_URL}/customers/create`;
-export const CUSTOMER_GET_URL = `${BASE_URL}/customers/all`;
-export const CUSTOMER_PUT_URL = `${BASE_URL}/customers/update`;
-export const CUSTOMER_PATCH_URL = `${BASE_URL}/customers/status`;
+export const CUSTOMER_CREATE_URL = `${BASE_URL}/admin/customers/create`;
+export const CUSTOMER_GET_URL = `${BASE_URL}/admin/customers/all`;
+export const CUSTOMER_PUT_URL = `${BASE_URL}/admin/customers/update`;
+export const CUSTOMER_PATCH_URL = `${BASE_URL}/admin/customers/status`;
 // ====================CUSTOMER APIS=========================
 
 // ==========================ZONE API ======================
@@ -29,13 +29,18 @@ export const CUSTOMER_BY_ZONE_GET_URL = `${BASE_URL}/delivery-operations/custome
 export const PRODUCTS_CREATE_URL = `${BASE_URL}/products/create`;
 export const PRODUCTS_GET_URL = `${BASE_URL}/products/all`;
 export const PRODUCTS_PUT_URL = `${BASE_URL}/products/update`;
+export const PRODUCTS_PATCH_URL = `${BASE_URL}/products/status`;
+
+
 
 // ==========================PRODUCTS API END ======================
 
 // ==========================DRIVER API ======================
-export const DRIVER_CREATE_URL = `${BASE_URL}/drivers/create`;
-export const DRIVER_GET_URL = `${BASE_URL}/drivers/all`;
-export const DRIVER_PUT_URL = `${BASE_URL}/drivers/update`;
+export const DRIVER_CREATE_URL = `${BASE_URL}/admin/drivers/create`;
+export const DRIVER_GET_URL = `${BASE_URL}/admin/drivers/all`;
+export const DRIVER_PUT_URL = `${BASE_URL}/admin/drivers/update`;
+export const DRIVER_PATCH_URL = `${BASE_URL}/admin/drivers/status`;
+
 
 export const DRIVER_PATCH_ASSIGN_URL = `${BASE_URL}/delivery-operations/assign-driver`;
 export const BULK_ASSIGN_DRIVER_URL = `${BASE_URL}/delivery-operations/assign-driver`;

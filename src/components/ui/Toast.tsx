@@ -56,14 +56,14 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   const getTextColor = () => {
     switch (toast.type) {
       case 'success':
-        return 'text-green-100';
+        return 'text-green-800';
       case 'error':
-        return 'text-red-100';
+        return 'text-red-800';
       case 'warning':
-        return 'text-yellow-100';
+        return 'text-yellow-800';
       case 'info':
       default:
-        return 'text-blue-100';
+        return 'text-blue-800';
     }
   };
 

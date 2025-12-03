@@ -19,7 +19,7 @@ import {
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
-import { useDriver, useOrderStore } from "@/lib/api/servicesHooks";
+import { useDriver, useStatusUpdateDriver } from "@/lib/api/servicesHooks";
 
 interface Zone {
   name: string;
@@ -58,10 +58,11 @@ interface DriverResponse {
 export default function DriverRouteManagement() {
 
   const { data, isLoading, isError } = useDriver();
-
+  const { mutate: updateStatus, isPending } = useStatusUpdateDriver();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const driverData = data as DriverResponse | undefined;
   const drivers = driverData?.drivers || [];
@@ -87,6 +88,22 @@ export default function DriverRouteManagement() {
       return matchesSearch && matchesStatus;
     });
   }, [drivers, searchQuery, statusFilter]);
+
+  const handleStatusChange = (
+    driverId: string,
+    status: Driver["status"],
+  ) => {
+    console.log("Status changed to:", status);
+
+    updateStatus(
+      { id: driverId, status },
+      {
+        onSuccess: () => {
+          setOpenId(null);
+        },
+      },
+    );
+  };
 
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
@@ -131,13 +148,13 @@ export default function DriverRouteManagement() {
   return (
     <DefaultLayout>
       <Breadcrumb
-        pageName="Driver & Route Management"
+        pageName="Driver & Zone Management"
         description="Manage delivery routes, and schedules"
       />
       <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="block sm:hidden">
           <h2 className="text-xl font-semibold text-black dark:text-white">
-            Driver & Route Management
+            Driver & Zone Management
           </h2>
         </div>
         <Link href="/driver/add" className="sm:ml-auto">
@@ -324,9 +341,44 @@ export default function DriverRouteManagement() {
                           </button>
                         </Link>
 
-                        <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-                          <MoreVertical size={18} />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            onClick={() => setOpenId(openId === driver.id ? null : driver.id)}
+                            className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
+                          >
+                            <MoreVertical size={16} className="sm:size-[18px]" />
+                          </button>
+
+                          {/* Dropdown Menu - Shows opposite status */}
+                          {openId === driver.id && (
+                            <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                              {driver.status === "active" ? (
+                                <button
+                                  onClick={() =>
+                                    handleStatusChange(
+                                      driver.id,
+                                      "inactive",
+                                    )
+                                  }
+                                  disabled={isPending}
+                                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                                >
+                                  ✗ Deactivate
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    handleStatusChange(driver.id, "active")
+                                  }
+                                  disabled={isPending}
+                                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-green-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-green-900/30"
+                                >
+                                  ✓ Activate
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -364,12 +416,50 @@ export default function DriverRouteManagement() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-                    <Eye size={18} />
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-                    <MoreVertical size={18} />
-                  </button>
+                  <Link href={`/driver/${driver.id}`}>
+                    <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                      <Eye size={18} />
+                    </button>
+                  </Link>
+
+                  <div className="relative">
+                    <button 
+                      onClick={() => setOpenId(openId === driver.id ? null : driver.id)}
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+
+                    {/* Dropdown Menu - Shows opposite status */}
+                    {openId === driver.id && (
+                      <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                        {driver.status === "active" ? (
+                          <button
+                            onClick={() =>
+                              handleStatusChange(
+                                driver.id,
+                                "inactive",
+                              )
+                            }
+                            disabled={isPending}
+                            className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                          >
+                            ✗ Deactivate
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleStatusChange(driver.id, "active")
+                            }
+                            disabled={isPending}
+                            className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-green-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-green-900/30"
+                          >
+                            ✓ Activate
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

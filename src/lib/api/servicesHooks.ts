@@ -1,8 +1,8 @@
 import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts } from "./apiFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts, statusProduct, statusUpdateDriver } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
 import { addZone, delete_Zone, setZone, update_Zone } from "../store/useZoneStore";
-import { addProducts, setProducts, update_Products } from "../store/useProduct";
+import { addProducts, setProducts, status_Product, update_Products } from "../store/useProduct";
 
 
 
@@ -10,7 +10,7 @@ import { addProducts, setProducts, update_Products } from "../store/useProduct";
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { AssignDriverPayload, BulkAssignPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/auth";
-import { addDriver, setDrivers, status_Driver, update_Driver, useDriverStore } from "../store/useDriver";
+import { addDriver, setDrivers, status_Driver, status_update_Driver, update_Driver, useDriverStore } from "../store/useDriver";
 import { addOrder, setOrders, updateOrder } from "../store/useOrder";
 import { setInventory, updateInventory } from "../store/inventoryStore";
 import { useToastStore } from '../store/toastStore';
@@ -123,12 +123,19 @@ export const useProducts = createQueryFactory("products", async () => {
 });
 
 
-export const useUpdate = createMutationFactory(
-  "customers",
+export const useUpdateProducts = createMutationFactory(
+  "products",
   updateProducts,
   (data) => update_Products(data)
 );
 
+
+
+export const useStatusProduct = createMutationFactory<Product, StatusPayload>(
+  "products",
+  statusProduct,
+  (data) => status_Product(data)
+);
 
 // =============================================PRODUCTS HOOKS END=========================
 
@@ -155,6 +162,12 @@ export const useUpdateDriver = createMutationFactory(
   (data) => update_Driver(data)
 );
 
+
+export const useStatusUpdateDriver = createMutationFactory<Driver, StatusPayload>(
+  "drivers",
+  statusUpdateDriver,
+  (data) => status_update_Driver(data)
+);
 
 
 // export const useStatusDriver =

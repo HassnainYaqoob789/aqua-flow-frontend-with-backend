@@ -1,6 +1,7 @@
 // useDriverStore.ts
 import { createStoreFactory } from "./storeFactory";
-import { Driver } from "@/lib/types/auth";
+import { Customer, Driver } from "@/lib/types/auth";
+import { useCustomerStore } from "./useCustomerZoneStore";
 
 interface DriverState {
   drivers: Driver[];
@@ -33,6 +34,16 @@ export const update_Driver = (driver: Driver) => {
   setState({
     drivers: state.drivers.map((c) =>
       c.id === driver.id ? driver : c
+    ),
+  });
+};
+
+
+export const status_update_Driver = (driver: Driver) => {
+  const { state, setState } = useDriverStore.getState();
+  setState({
+    drivers: state.drivers.map((d) =>
+      d.id === driver.id ? driver : d
     ),
   });
 };

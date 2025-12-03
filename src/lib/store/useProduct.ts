@@ -27,5 +27,14 @@ export const addProducts = (product: Product) =>
     });
   };
 
+  export const status_Product = (product: Product) => {
+    const { state, setState } = useProductStore.getState();
+    setState({
+      products: state.products.map((c) =>
+        c.id === product.id ? product : c
+      ),
+    });
+  };
+
 export const clearProducts = () =>
   useProductStore.getState().resetState();

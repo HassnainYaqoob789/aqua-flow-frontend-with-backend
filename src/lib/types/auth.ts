@@ -144,17 +144,20 @@ export interface ZoneResponse {
 // ==========================
 // PRODUCTS
 // ==========================
+// lib/types/auth.ts (update the Product interface)
 export interface Product {
   id: string;
   name: string;
   size: string;
+  category: "water" | "milk"; // Add this field
   price: number;
   description?: string;
   image?: string;
   status: "active" | "inactive";
   createdAt: string;
-  isReusable?: boolean; // Add this field if missing
-  depositAmount?: number; // Add this for security deposit per product
+  isReusable?: boolean;
+  depositAmount?: number;
+  requiresEmptyReturn?: boolean; // Add this field
 }
 
 export interface ProductResponse {

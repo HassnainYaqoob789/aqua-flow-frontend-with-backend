@@ -51,6 +51,8 @@ import {
   USERS_CREATE_URL,
   USERS_GET_URL,
   PRODUCTS_PUT_URL,
+  PRODUCTS_PATCH_URL,
+  DRIVER_PATCH_URL,
 } from "./services/endpoints";
 import apiClient from "./services/apiClient";
 import { useDriverStore } from "../store/useDriver";
@@ -137,6 +139,12 @@ export const updateProducts = async (
   const { id, ...rest } = payload;
   return await apiPut<Product>(`${PRODUCTS_PUT_URL}/${id}`, rest);
 };
+export const statusProduct = async (
+  payload: StatusPayload
+): Promise<Product> => {
+  const { id, status } = payload;
+  return await apiPatch<Product>(`${PRODUCTS_PATCH_URL}/${id}`, { status });
+};
 
 // =========================PRODUCTS APIS END=========================
 
@@ -158,6 +166,15 @@ export const updateDriver = async (
   return await apiPut<Driver>(`${DRIVER_PUT_URL}/${id}`, rest);
 };
 
+export const statusUpdateDriver = async (
+  payload: StatusPayload
+): Promise<Driver> => {
+  const { id, status } = payload;
+  return await apiPatch<Driver>(`${DRIVER_PATCH_URL}/${id}`, { status });
+};
+
+// ============================================================================================================
+
 export const bulkAssignDriver = async (
   payload: BulkAssignPayload
 ): Promise<any> => {
@@ -178,6 +195,8 @@ export const statusDriver = async (
   const { id, status } = payload;
   return await apiPatch<Driver>(`${DRIVER_PATCH_ASSIGN_URL}/${id}`, { status });
 };
+
+
 // =================================DRIVER APIS END================================
 
 // ==================================ORDER APIS============================

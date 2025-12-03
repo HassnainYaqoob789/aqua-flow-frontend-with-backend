@@ -7,8 +7,10 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { IMG_URL } from "@/lib/api/services/endpoints";
 import { useProducts } from "@/lib/api/servicesHooks";
+import { useStatusProduct } from "@/lib/api/servicesHooks"; // Assuming this is the path; adjust if needed
+import { ProductResponse, Product } from "@/lib/types/auth"; // Customer might not be needed; adjust imports
 
-interface Product {
+interface LocalProduct {
   id: string;
   name: string;
   size?: string;
@@ -19,7 +21,7 @@ interface Product {
   createdAt?: string;
   user?: { name: string };
   isReusable: boolean;
-  depositAmount?: number;          // Add this
+  depositAmount?: number;
 }
 
 const getStatusColor = (status: string) => {
@@ -35,7 +37,8 @@ const getStatusColor = (status: string) => {
 
 export default function ProductsPage() {
   const { data: apiResponse, isLoading, isError } = useProducts();
-  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const { mutate: updateStatus, isPending } = useStatusProduct();
+  const [localProducts, setLocalProducts] = useState<LocalProduct[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
 
   // Load custom products from localStorage on mount
@@ -55,37 +58,53 @@ export default function ProductsPage() {
     }
   }, [localProducts]);
 
-// Combine API + local products
-const products = useMemo(() => {
-  const apiProducts: Product[] =
-    apiResponse?.products?.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      image: p.image,
-      status: p.status,
-      createdAt: p.createdAt,
-      user: p.user,
-      category: p.name.toLowerCase().includes("milk") ? "milk" : "water",
-      size: p.size || extractSizeFromName(p.name),
-      isReusable: p.isReusable,           // Add this
-      depositAmount: p.depositAmount,     // Add this
-    })) || [];
+  // Combine API + local products
+  const products = useMemo(() => {
+    const apiProducts: Product[] =
+      apiResponse?.products?.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        status: p.status,
+        createdAt: p.createdAt,
+        user: p.user,
+        category: p.name.toLowerCase().includes("milk") ? "milk" : "water",
+        size: p.size || extractSizeFromName(p.name),
+        isReusable: p.isReusable,
+        depositAmount: p.depositAmount,
+      })) || [];
 
-  const merged = [...apiProducts];
-  localProducts.forEach((local) => {
-    if (!merged.some((m) => m.id === local.id)) {
-      merged.push(local);
-    }
-  });
+    const merged = [...apiProducts];
+    localProducts.forEach((local) => {
+      if (!merged.some((m) => m.id === local.id)) {
+        merged.push(local as Product);
+      }
+    });
 
-  return merged;
-}, [apiResponse, localProducts]);
+    return merged;
+  }, [apiResponse, localProducts]);
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
       setLocalProducts((prev) => prev.filter((p) => p.id !== id));
     }
+  };
+
+  const handleStatusChange = (
+    productId: string,
+    status: Product["status"],
+  ) => {
+    console.log("Status changed to:", status);
+
+    updateStatus(
+      { id: productId, status },
+      {
+        onSuccess: () => {
+          setOpenId(null);
+        },
+      },
+    );
   };
 
   // Extract size from product name
@@ -120,7 +139,7 @@ const products = useMemo(() => {
         {/* Top Actions */}
         <div className="mb-6 flex justify-end">
           <Link
-            href="/products/add-products"
+            href="/products/new"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus size={20} />
@@ -193,32 +212,11 @@ const products = useMemo(() => {
                           </p>
                         )}
 
-                        {/* MOBILE VIEW BLOCK */}
-                        <div className="mt-1 space-y-0.5 md:hidden">
-                          {product.size && (
-                            <p className="text-xs text-gray-600 dark:text-gray-300">
-                              <Droplets size={12} className="inline h-3 w-3" /> {product.size}
-                            </p>
-                          )}
-
-                          {product.isReusable && (
-                            <p className="text-xs flex items-center gap-1 text-green-600 dark:text-green-400">
-                              <Recycle size={12} /> Reusable
-                            </p>
-                          )}
-
-                          <p className="text-xs font-semibold text-green-600 dark:text-green-400">
-                            PKR {product.price.toFixed(2)}
+                        {product.isReusable && (
+                          <p className="text-xs flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <Recycle size={12} /> Reusable
                           </p>
-
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
-                              status
-                            )}`}
-                          >
-                            {status}
-                          </span>
-                        </div>
+                        )}
 
                         <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                           PKR {product.price.toFixed(2)}
@@ -261,7 +259,6 @@ const products = useMemo(() => {
                   </td>
 
                   {/* REUSABLE COLUMN (DESKTOP) */}
-                  {/* REUSABLE COLUMN (DESKTOP) */}
                   <td className="hidden px-3 py-3 text-center sm:px-6 sm:py-4 md:table-cell">
                     {product.isReusable ? (
                       <Recycle
@@ -292,7 +289,7 @@ const products = useMemo(() => {
                   {/* ACTIONS */}
                   <td className="px-3 py-3 sm:px-6 sm:py-4">
                     <div className="relative flex items-center justify-center gap-1 sm:gap-2">
-                      <Link href={`/products/form?mode=edit&id=${product.id}`}>
+                      <Link href={`/products/${product.id}`}>
                         <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300">
                           <Edit2 size={16} className="sm:size-[18px]" />
                         </button>
@@ -306,20 +303,43 @@ const products = useMemo(() => {
                           <MoreVertical size={16} className="sm:size-[18px]" />
                         </button>
 
+                        {/* Dropdown Menu - Shows opposite status */}
                         {openId === product.id && (
                           <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
-                            <button
-                              onClick={() => {
-                                handleDelete(product.id);
-                                setOpenId(null);
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
-                            >
-                              🗑️ Delete
-                            </button>
+                            {status === "active" ? (
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    product.id,
+                                    "inactive",
+                                  )
+                                }
+                                disabled={isPending}
+                                className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                              >
+                                ✗ Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(product.id, "active")
+                                }
+                                disabled={isPending}
+                                className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-green-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-green-900/30"
+                              >
+                                ✓ Activate
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
+
+                      {/* <button
+                        onClick={() => handleDelete(product.id)}
+                        className="p-1 text-gray-500 transition-colors hover:text-red-700 dark:text-gray-400 dark:hover:text-red-300"
+                      >
+                        <Trash2 size={16} className="sm:size-[18px]" />
+                      </button> */}
                     </div>
                   </td>
                 </tr>
