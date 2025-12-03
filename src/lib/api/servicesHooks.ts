@@ -1,8 +1,8 @@
 import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers } from "./apiFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
 import { addZone, delete_Zone, setZone, update_Zone } from "../store/useZoneStore";
-import { addProducts, setProducts } from "../store/useProduct";
+import { addProducts, setProducts, update_Products } from "../store/useProduct";
 
 
 
@@ -121,6 +121,13 @@ export const useProducts = createQueryFactory("products", async () => {
   setProducts(data); // this expects ProductResponse, which has .products
   return data;
 });
+
+
+export const useUpdate = createMutationFactory(
+  "customers",
+  updateProducts,
+  (data) => update_Products(data)
+);
 
 
 // =============================================PRODUCTS HOOKS END=========================

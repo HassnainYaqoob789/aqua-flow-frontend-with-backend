@@ -50,6 +50,7 @@ import {
   DRIVER_PUT_URL,
   USERS_CREATE_URL,
   USERS_GET_URL,
+  PRODUCTS_PUT_URL,
 } from "./services/endpoints";
 import apiClient from "./services/apiClient";
 import { useDriverStore } from "../store/useDriver";
@@ -129,6 +130,14 @@ export const createProductWithImage = async (formData: FormData): Promise<Produc
 export const getProducts = async (): Promise<ProductResponse> => {
   return await apiGet<ProductResponse>(PRODUCTS_GET_URL);
 };
+
+export const updateProducts = async (
+  payload: Partial<Product> & { id: string }
+): Promise<Product> => {
+  const { id, ...rest } = payload;
+  return await apiPut<Product>(`${PRODUCTS_PUT_URL}/${id}`, rest);
+};
+
 // =========================PRODUCTS APIS END=========================
 
 // ==================================DRIVER APIS============================
