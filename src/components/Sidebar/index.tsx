@@ -17,7 +17,7 @@ import {
   Warehouse,
   FileText,
   PackageSearch,
-  Settings 
+  Settings
 } from "lucide-react";
 
 interface SidebarProps {
@@ -86,15 +86,21 @@ const menuGroups = [
         route: "/inventory/all-inventory",
       },
       // {
+      //   icon: <Warehouse className="h-5 w-5" />,
+      //   label: "Payments",
+      //   route: "/inventory/all-inventory",
+      // },
+
+      // {
       //   icon: <DollarSign className="h-5 w-5" />,
       //   label: "All Expenses",
       //   route: "/expenses/all-expenses",
       // },
-        // {
-        //   icon: <FileText className="h-5 w-5" />,
-        //   label: "Billing & Recoveries",
-        //   route: "/billing-recoveries",
-        // },
+      {
+        icon: <FileText className="h-5 w-5" />,
+        label: "Billing & Recoveries",
+        route: "/billing-recoveries",
+      },
 
       {
         icon: <FileText className="h-5 w-5" />,
@@ -107,7 +113,7 @@ const menuGroups = [
     name: "SETTING",
     menuItems: [
       {
-        icon: <Settings  className="h-5 w-5" />,
+        icon: <Settings className="h-5 w-5" />,
         label: "Users",
         route: "/users/all-users",
       },

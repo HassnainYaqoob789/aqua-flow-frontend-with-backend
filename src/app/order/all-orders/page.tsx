@@ -323,7 +323,7 @@ export default function OrderManagement() {
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       {!hasDriver ? (
                         <p className="text-black dark:text-white">
-                         No driver Assinged
+                          No driver Assinged
                         </p>
 
                       ) : (
@@ -352,11 +352,12 @@ export default function OrderManagement() {
                           order.status
                         )}`}
                       >
-                        {isPending && !hasDriver
+                        {/* {isPending && !hasDriver
                           ? "Pending Assignment"
                           : hasDriver
                             ? "Assigned"
-                            : formatStatus(order.status)}
+                            : formatStatus(order.status)} */}
+                        {order?.status}
                       </span>
                     </td>
                   </tr>

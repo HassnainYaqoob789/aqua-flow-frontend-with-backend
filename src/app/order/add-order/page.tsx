@@ -18,6 +18,7 @@ import {
   Minus,
   Trash2,
   Wallet,
+  CheckSquare,
 } from "lucide-react";
 import { useCustomers, useDriver, useProducts } from "@/lib/api/servicesHooks";
 import { IMG_URL } from "@/lib/api/services/endpoints";
@@ -28,13 +29,13 @@ import { useCreateOrder } from "@/lib/api/servicesHooks";
 import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/auth";
 
 // interface OrderItem {
-//   id: string;
-//   name: string;
-//   size: string;
-//   quantity: number;
-//   price: number;
-//   image: string;
-//   depositAmount: number;
+// id: string;
+// name: string;
+// size: string;
+// quantity: number;
+// price: number;
+// image: string;
+// depositAmount: number;
 // }
 interface FormData {
   customer: string;
@@ -45,8 +46,10 @@ interface FormData {
   amount: string;
   payment: "COD";
   depositAmountTaking: string;
+  isRecurring: boolean;
+  recurrence: string;
+  preferredTime: string;
 }
-
 
 interface Errors {
   [key: string]: string;
@@ -76,6 +79,9 @@ export default function AddOrder() {
     amount: "0",
     payment: "COD",
     depositAmountTaking: "0",
+    isRecurring: false,
+    recurrence: "",
+    preferredTime: "",
   });
 
   const [errors, setErrors] = useState<Errors>({});
@@ -84,7 +90,6 @@ export default function AddOrder() {
   const calculateTotalDeposit = (items: FormOrderItem[]): number => {
     return items.reduce((sum, item) => sum + item.depositAmount * item.quantity, 0);
   };
-
 
   // Auto-calculate total amount (product prices + deposit amount taking)
   useEffect(() => {
@@ -156,6 +161,18 @@ export default function AddOrder() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const handleRecurringChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setFormData((prev) => ({ ...prev, isRecurring: isChecked }));
+    if (!isChecked) {
+      setFormData((prev) => ({ ...prev, recurrence: "", preferredTime: "" }));
+      setErrors((prev) => {
+        const { recurrence, preferredTime, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
   const handleDepositTakingChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Allow empty string or valid numbers
@@ -211,6 +228,11 @@ export default function AddOrder() {
       newErrors.depositAmountTaking = `Cannot exceed total deposit (PKR ${totalDeposit.toFixed(2)})`;
     }
 
+    if (formData.isRecurring) {
+      if (!formData.recurrence) newErrors.recurrence = "Recurrence pattern is required";
+      if (!formData.preferredTime) newErrors.preferredTime = "Preferred time is required";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,12 +260,17 @@ export default function AddOrder() {
         })),
         ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
         ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
+        ...(formData.isRecurring && {
+          isRecurring: true,
+          recurrence: formData.recurrence,
+          preferredTime: formData.preferredTime,
+        }),
       };
 
       console.log("Submitting order:", payload);
 
       await createOrderMutation.mutateAsync(payload);
-      router.push("/order/all-orders");
+      // router.push("/order/all-orders");
       setFormData({
         customer: "",
         address: "",
@@ -254,6 +281,9 @@ export default function AddOrder() {
         amount: "0",
         payment: "COD",
         depositAmountTaking: "0",
+        isRecurring: false,
+        recurrence: "",
+        preferredTime: "",
       });
 
       setErrors({});
@@ -327,7 +357,7 @@ export default function AddOrder() {
                     value={
                       formData.customer
                         ? customers.find((c) => c.id === formData.customer)?.zone?.name ||
-                        "No zone"
+                          "No zone"
                         : ""
                     }
                     className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
@@ -525,6 +555,63 @@ export default function AddOrder() {
                   <p className="mt-1 text-xs text-red-500">{errors.date}</p>
                 )}
               </div>
+
+              {/* Recurring Order Section */}
+              <div className="mt-6">
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                  <CheckSquare className="h-4 w-4" /> Make this a recurring order?
+                </label>
+                <input
+                  type="checkbox"
+                  checked={formData.isRecurring}
+                  onChange={handleRecurringChange}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+              </div>
+
+              {formData.isRecurring && (
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                      Recurrence Pattern *
+                    </label>
+                    <select
+                      name="recurrence"
+                      value={formData.recurrence}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg border ${errors.recurrence ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    >
+                      <option value="">Select recurrence</option>
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="BI_WEEKLY">Bi-weekly</option>
+                      <option value="MONTHLY">Monthly</option>
+                    </select>
+                    {errors.recurrence && (
+                      <p className="mt-1 text-xs text-red-500">{errors.recurrence}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+                      Preferred Delivery Time *
+                    </label>
+                    <select
+                      name="preferredTime"
+                      value={formData.preferredTime}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg border ${errors.preferredTime ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    >
+                      <option value="">Select time</option>
+                      <option value="MORNING">Morning</option>
+                      <option value="AFTERNOON">Afternoon</option>
+                      <option value="EVENING">Evening</option>
+                    </select>
+                    {errors.preferredTime && (
+                      <p className="mt-1 text-xs text-red-500">{errors.preferredTime}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Driver & Deposit Section */}
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
