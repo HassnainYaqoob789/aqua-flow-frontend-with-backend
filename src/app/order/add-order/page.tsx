@@ -42,6 +42,7 @@ interface FormData {
   address: string;
   items: FormOrderItem[];
   date: string;
+  // driver: "";
   zoneId: string;
   amount: string;
   payment: "COD";
@@ -49,6 +50,7 @@ interface FormData {
   isRecurring: boolean;
   recurrence: string;
   preferredTime: string;
+  selectedReusableProduct: string;
 }
 
 interface Errors {
@@ -82,6 +84,7 @@ export default function AddOrder() {
     isRecurring: false,
     recurrence: "",
     preferredTime: "",
+    selectedReusableProduct: "",
   });
 
   const [errors, setErrors] = useState<Errors>({});
@@ -284,6 +287,7 @@ export default function AddOrder() {
         isRecurring: false,
         recurrence: "",
         preferredTime: "",
+        selectedReusableProduct: "",
       });
 
       setErrors({});
@@ -357,7 +361,7 @@ export default function AddOrder() {
                     value={
                       formData.customer
                         ? customers.find((c) => c.id === formData.customer)?.zone?.name ||
-                          "No zone"
+                        "No zone"
                         : ""
                     }
                     className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
@@ -385,6 +389,78 @@ export default function AddOrder() {
                   )}
                 </div>
               </div>
+              {/* RECURRING ORDER SECTION */}
+              <div className="mt-6 space-y-2">
+                <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isRecurring}
+                    onChange={handleRecurringChange}
+                    className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                  />
+                  <span>Make this a recurring order?</span>
+                </label>
+
+                {/* ERROR BELOW CHECKBOX */}
+                {formData.isRecurring && !formData.selectedReusableProduct && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Please select a reusable product before enabling recurring orders.
+                  </p>
+                )}
+              </div>
+
+              {/* RECURRING FIELDS */}
+              {formData.isRecurring && (
+                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+                  {/* Recurrence Pattern */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Recurrence Pattern *
+                    </label>
+                    <select
+                      name="recurrence"
+                      value={formData.recurrence}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg border ${errors.recurrence ? "border-red-500" : "border-gray-300"
+                        } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
+                    >
+                      <option value="">Select recurrence</option>
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="BI_WEEKLY">Bi-weekly</option>
+                      <option value="MONTHLY">Monthly</option>
+                    </select>
+
+                    {errors.recurrence && (
+                      <p className="mt-1 text-xs text-red-500">{errors.recurrence}</p>
+                    )}
+                  </div>
+
+                  {/* Preferred Delivery Time */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Preferred Delivery Time *
+                    </label>
+                    <select
+                      name="preferredTime"
+                      value={formData.preferredTime}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg border ${errors.preferredTime ? "border-red-500" : "border-gray-300"
+                        } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
+                    >
+                      <option value="">Select time</option>
+                      <option value="MORNING">Morning</option>
+                      <option value="AFTERNOON">Afternoon</option>
+                      <option value="EVENING">Evening</option>
+                    </select>
+
+                    {errors.preferredTime && (
+                      <p className="mt-1 text-xs text-red-500">{errors.preferredTime}</p>
+                    )}
+                  </div>
+
+                </div>
+              )}
 
               {/* Product Selection */}
               <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -557,61 +633,7 @@ export default function AddOrder() {
               </div>
 
               {/* Recurring Order Section */}
-              <div className="mt-6">
-                <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                  <CheckSquare className="h-4 w-4" /> Make this a recurring order?
-                </label>
-                <input
-                  type="checkbox"
-                  checked={formData.isRecurring}
-                  onChange={handleRecurringChange}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-              </div>
 
-              {formData.isRecurring && (
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                      Recurrence Pattern *
-                    </label>
-                    <select
-                      name="recurrence"
-                      value={formData.recurrence}
-                      onChange={handleChange}
-                      className={`w-full rounded-lg border ${errors.recurrence ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                    >
-                      <option value="">Select recurrence</option>
-                      <option value="WEEKLY">Weekly</option>
-                      <option value="BI_WEEKLY">Bi-weekly</option>
-                      <option value="MONTHLY">Monthly</option>
-                    </select>
-                    {errors.recurrence && (
-                      <p className="mt-1 text-xs text-red-500">{errors.recurrence}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                      Preferred Delivery Time *
-                    </label>
-                    <select
-                      name="preferredTime"
-                      value={formData.preferredTime}
-                      onChange={handleChange}
-                      className={`w-full rounded-lg border ${errors.preferredTime ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                    >
-                      <option value="">Select time</option>
-                      <option value="MORNING">Morning</option>
-                      <option value="AFTERNOON">Afternoon</option>
-                      <option value="EVENING">Evening</option>
-                    </select>
-                    {errors.preferredTime && (
-                      <p className="mt-1 text-xs text-red-500">{errors.preferredTime}</p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Driver & Deposit Section */}
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">

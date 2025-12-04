@@ -11,55 +11,37 @@ import {
   Download,
   MapPin,
   Edit,
-  Trash2, // Add Trash2 for delete icon if desired
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
-import { useZone } from "@/lib/api/servicesHooks";
-import { useDeleteZone } from "@/lib/api/servicesHooks"; // Adjust path; assuming same file as useZone
-import { setZone } from "@/lib/store/useZoneStore";
+import { useZone, useStatusZone } from "@/lib/api/servicesHooks";
 import { Zone } from "@/lib/types/auth";
 
 export default function ZoneManagement() {
   const { data: dataaa, isLoading, isError } = useZone();
-  const deleteZoneHook = useDeleteZone(); // Fixed: Call the hook
-  const { mutate: deleteZoneMutate, isPending: isDeleting } = deleteZoneHook;
+  const { mutate: updateStatus, isPending } = useStatusZone();
 
   // Use React Query data directly
   const zones: Zone[] = dataaa?.zones || [];
 
   const [activeTab, setActiveTab] = useState("All");
-  const [confirmDelete, setConfirmDelete] = useState<Zone | null>(null); // New: For delete confirmation
+  const [openId, setOpenId] = useState<string | null>(null);
 
-  const handleStatusToggle = (zoneId: string) => {
-    const updatedZones = zones.map((zone) => {
-      if (zone.id === zoneId) {
-        const newStatus: "active" | "inactive" = zone.status === "active" ? "inactive" : "active";
-        return { ...zone, status: newStatus };
-      }
-      return zone;
-    });
+  const handleStatusChange = (
+    zoneId: string,
+    status: Zone["status"],
+  ) => {
+    console.log("Status changed to:", status);
 
-    // Update Zustand store so data persists
-    setZone(updatedZones);
-  };
-
-  const handleDelete = (zone: Zone) => {
-    setConfirmDelete(zone);
-  };
-
-  const confirmDeleteZone = () => {
-    if (!confirmDelete) return;
-    deleteZoneMutate(confirmDelete.id, {
-      onSuccess: () => {
-        setConfirmDelete(null);
-        // Optional: Additional local cleanup if needed (query invalidates automatically)
+    updateStatus(
+      { id: zoneId, status },
+      {
+        onSuccess: () => {
+          setOpenId(null);
+        },
       },
-      onError: () => {
-        setConfirmDelete(null);
-      },
-    });
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -260,17 +242,44 @@ export default function ZoneManagement() {
                               <Edit size={16} className="sm:size-[18px]" />
                             </button>
                           </Link>
-                          {/* Fixed: MoreVertical now triggers delete confirm */}
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(zone);
-                            }}
-                            className="p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            title="Delete zone"
-                          >
-                            <MoreVertical size={16} className="sm:size-[18px]" />
-                          </button>
+                          <div className="relative">
+                            <button 
+                              onClick={() => setOpenId(openId === zone.id ? null : zone.id)}
+                              className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                              <MoreVertical size={16} className="sm:size-[18px]" />
+                            </button>
+
+                            {/* Dropdown Menu - Shows opposite status */}
+                            {openId === zone.id && (
+                              <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                                {zone.status === "active" ? (
+                                  <button
+                                    onClick={() =>
+                                      handleStatusChange(
+                                        zone.id,
+                                        "inactive",
+                                      )
+                                    }
+                                    disabled={isPending}
+                                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-red-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-red-900/30"
+                                  >
+                                    ✗ Deactivate
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      handleStatusChange(zone.id, "active")
+                                    }
+                                    disabled={isPending}
+                                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 first:rounded-t-lg last:rounded-b-lg hover:bg-green-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-green-900/30"
+                                  >
+                                    ✓ Activate
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -287,39 +296,6 @@ export default function ZoneManagement() {
               </div>
             )}
           </div>
-
-          {/* Delete Confirmation Modal */}
-          {confirmDelete && (
-            <div 
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" 
-              onClick={(e) => {
-                if (e.target === e.currentTarget) setConfirmDelete(null);
-              }}
-            >
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Delete Zone</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Are you sure you want to delete <strong>&quot;{confirmDelete.name}&quot;</strong>? This action cannot be undone.
-                </p>
-                <div className="flex justify-end gap-3">
-                  <button 
-                    onClick={() => setConfirmDelete(null)} 
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={confirmDeleteZone}
-                    disabled={isDeleting}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
-                  >
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Alert Banner */}
           {activeTab === "Inactive" && filteredZones.length > 0 && (

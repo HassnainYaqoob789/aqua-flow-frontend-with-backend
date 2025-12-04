@@ -21,6 +21,10 @@ export const ZONE_CREATE_URL = `${BASE_URL}/zones/create`;
 export const ZONE_GET_URL = `${BASE_URL}/zones/all`;
 export const ZONE_PUT_URL = `${BASE_URL}/zones/update`;
 export const ZONE_DELETE_URL = `${BASE_URL}/zones/delete/`;
+export const ZONE_PATCH_URL = `${BASE_URL}/zones/delete`;
+
+
+
 
 export const CUSTOMER_BY_ZONE_GET_URL = `${BASE_URL}/delivery-operations/customers-by-zone`;
 // ==========================ZONE API ======================

@@ -37,6 +37,16 @@ export const delete_Zone = (zone: Zone) => {
   });
 };
 
+
+export const status_Zone = (zone: Zone) => {
+  const { state, setState } = useZoneStore.getState();
+  setState({
+    zone: state.zone.map((c) =>
+      c.id === zone.id ? zone : c
+    ),
+  });
+};
+
 // Optional: Add a helper to update selectedZoneId (matches your component's usage pattern)
 export const setSelectedZoneId = (zoneId: string) =>
   useZoneStore.getState().setState({ selectedZoneId: zoneId });

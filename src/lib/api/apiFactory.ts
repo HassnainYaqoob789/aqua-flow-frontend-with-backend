@@ -53,6 +53,7 @@ import {
   PRODUCTS_PUT_URL,
   PRODUCTS_PATCH_URL,
   DRIVER_PATCH_URL,
+  ZONE_PATCH_URL,
 } from "./services/endpoints";
 import apiClient from "./services/apiClient";
 import { useDriverStore } from "../store/useDriver";
@@ -104,6 +105,14 @@ export const deleteZone = async (
 ): Promise<Zone> => {
   return await apiDelete<Zone>(`${ZONE_DELETE_URL}${id}`);
 };
+
+export const statusZone = async (
+  payload: StatusPayload
+): Promise<Zone> => {
+  const { id, status } = payload;
+  return await apiPatch<Zone>(`${ZONE_PATCH_URL}/${id}`, { status });
+};
+
 export const assignDriver = async (
   payload: AssignDriverPayload
 ): Promise<Order> => {

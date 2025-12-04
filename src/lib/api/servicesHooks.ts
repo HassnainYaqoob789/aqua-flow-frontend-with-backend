@@ -1,7 +1,7 @@
 import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts, statusProduct, statusUpdateDriver } from "./apiFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts, statusProduct, statusUpdateDriver, statusZone } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
-import { addZone, delete_Zone, setZone, update_Zone } from "../store/useZoneStore";
+import { addZone, delete_Zone, setZone, status_Zone, update_Zone } from "../store/useZoneStore";
 import { addProducts, setProducts, status_Product, update_Products } from "../store/useProduct";
 
 
@@ -89,6 +89,11 @@ export const useDeleteZone = createMutationFactory<Zone, string>(
 );
 
 
+export const useStatusZone = createMutationFactory<Zone, StatusPayload>(
+  "zones",
+  statusZone,
+  (data) => status_Zone(data)
+);
 
 
 
