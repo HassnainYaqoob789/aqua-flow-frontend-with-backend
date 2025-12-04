@@ -27,6 +27,7 @@ import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { useDriverStore } from "@/lib/store/useDriver";
 import { useCreateOrder } from "@/lib/api/servicesHooks";
 import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/auth";
+import { useToastStore } from "@/lib/store/toastStore";
 
 // interface OrderItem {
 // id: string;
@@ -240,62 +241,69 @@ export default function AddOrder() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+const handleSubmit = async () => {
+  if (!validateForm()) return;
 
-    if (formData.payment !== "COD") {
-      const confirmProceed = confirm(
-        "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
-      );
-      if (!confirmProceed) return;
-    }
+  if (formData.payment !== "COD") {
+    const confirmProceed = confirm(
+      "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
+    );
+    if (!confirmProceed) return;
+  }
 
-    try {
-      const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
+  try {
+    const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
 
-      const payload: CreateOrderPayload = {
-        customerId: formData.customer,
-        // driverId: formData.driver,
-        deliveryDate: formData.date,
-        items: formData.items.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-        })),
-        ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
-        ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
-        ...(formData.isRecurring && {
-          isRecurring: true,
-          recurrence: formData.recurrence,
-          preferredTime: formData.preferredTime,
-        }),
-      };
+    const payload: CreateOrderPayload = {
+      customerId: formData.customer,
+      deliveryDate: formData.date,
+      items: formData.items.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      })),
+      ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
+      ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
+      ...(formData.isRecurring && {
+        isRecurring: true,
+        recurrence: formData.recurrence,
+        preferredTime: formData.preferredTime,
+      }),
+    };
 
-      console.log("Submitting order:", payload);
+    await createOrderMutation.mutateAsync(payload);
 
-      await createOrderMutation.mutateAsync(payload);
-      // router.push("/order/all-orders");
-      setFormData({
-        customer: "",
-        address: "",
-        items: [],
-        date: "",
-        // driver: "",
-        zoneId: "",
-        amount: "0",
-        payment: "COD",
-        depositAmountTaking: "0",
-        isRecurring: false,
-        recurrence: "",
-        preferredTime: "",
-        selectedReusableProduct: "",
-      });
+    // Reset form only on success
+    setFormData({
+      customer: "",
+      address: "",
+      items: [],
+      date: "",
+      zoneId: "",
+      amount: "0",
+      payment: "COD",
+      depositAmountTaking: "0",
+      isRecurring: false,
+      recurrence: "",
+      preferredTime: "",
+      selectedReusableProduct: "",
+    });
 
-      setErrors({});
-    } catch (err: any) {
-      console.error("Order creation failed:", err);
-      alert(err?.message || "Failed to create order. Please try again.");
-    }
-  };
+    setErrors({});
+    
+    // 🔥 Optional: show success toast
+    useToastStore.getState().addToast("Order created successfully!", "success");
+
+  } catch (err: any) {
+    console.error("Order creation failed:", err);
+
+    const message = err?.response?.data?.error 
+      || err?.message 
+      || "Failed to create order";
+
+    // 🔥 Show toast instead of alert
+    useToastStore.getState().addToast(message, "error");
+  }
+};
 
   const totalItems = formData.items.reduce((s, i) => s + i.quantity, 0);
   const totalAmount = parseFloat(formData.amount) || 0;
