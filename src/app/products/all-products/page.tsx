@@ -187,7 +187,6 @@ export default function ProductsPage() {
 
               return (
                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  {/* PRODUCT NAME + CATEGORY + MOBILE INFO */}
                   <td className="px-3 py-3 sm:px-6 sm:py-4">
                     <div>
                       <p className="text-xs font-medium text-gray-900 dark:text-white sm:text-sm">

@@ -709,7 +709,7 @@ export default function AddOrder() {
                     <p className="mt-1 text-xs text-red-500">{errors.depositAmountTaking}</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Enter the deposit amount you're collecting from the customer
+                    Enter the deposit amount youre collecting from the customer
                   </p>
                 </div>
               )}
