@@ -121,7 +121,7 @@ export default function ProductFormPage() {
     };
 
     const onSuccess = () => {
-        router.push("/products/all-products");
+        // router.push("/products/all-products");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -255,7 +255,7 @@ export default function ProductFormPage() {
                                 onChange={handleInputChange}
                                 className="w-4 h-4"
                             />
-                            <span className="font-semibold">Is the Bottle Reusable?</span>
+                            <span className="font-semibold">Is the Product Reusable?</span>
                         </label>
 
                         {formData.isReusable && (
@@ -277,19 +277,6 @@ export default function ProductFormPage() {
                                         <p className="mt-1 text-xs text-red-500">{errors.depositAmount}</p>
                                     )}
                                 </div>
-
-                                <label className="flex items-center gap-3 cursor-pointer text-sm">
-                                    <input
-                                        type="checkbox"
-                                        name="requiresEmptyReturn"
-                                        checked={formData.requiresEmptyReturn}
-                                        onChange={handleInputChange}
-                                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                                    />
-                                    <span className="font-medium text-black dark:text-gray-200">
-                                        Return of Empty Bottle Required
-                                    </span>
-                                </label>
                             </div>
                         )}
                     </div>

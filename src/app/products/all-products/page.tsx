@@ -22,6 +22,7 @@ interface LocalProduct {
   user?: { name: string };
   isReusable: boolean;
   depositAmount?: number;
+  requiresEmptyReturn?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -73,6 +74,7 @@ export default function ProductsPage() {
         size: p.size || extractSizeFromName(p.name),
         isReusable: p.isReusable,
         depositAmount: p.depositAmount,
+        requiresEmptyReturn: p.requiresEmptyReturn,
       })) || [];
 
     const merged = [...apiProducts];
@@ -175,6 +177,12 @@ export default function ProductsPage() {
               <th className="px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                 Price
               </th>
+              <th className="hidden px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm lg:table-cell">
+                Deposit Amount
+              </th>
+              <th className="hidden px-3 py-3 text-center text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm lg:table-cell">
+                Empty Return
+              </th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                 Status
               </th>
@@ -219,6 +227,16 @@ export default function ProductsPage() {
 
                         <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                           PKR {product.price.toFixed(2)}
+                        </p>
+
+                        {product.depositAmount && product.depositAmount > 0 && (
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                            Deposit: PKR {product.depositAmount.toFixed(2)}
+                          </p>
+                        )}
+
+                        <p className={`text-xs ${product.requiresEmptyReturn ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          Req. Empty Return: {product.requiresEmptyReturn ? 'Yes' : 'No'}
                         </p>
 
                         <span
@@ -272,6 +290,26 @@ export default function ProductsPage() {
                   {/* PRICE */}
                   <td className="px-3 py-3 text-right text-sm font-medium text-gray-900 dark:text-gray-100 sm:px-6 sm:py-4">
                     PKR {product.price.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                  </td>
+
+                  {/* DEPOSIT (DESKTOP) */}
+                  <td className="hidden px-3 py-3 text-right sm:px-6 sm:py-4 lg:table-cell">
+                    <div className="text-xs text-gray-900 dark:text-white sm:text-sm">
+                      {product.depositAmount && product.depositAmount > 0 ? (
+                        <p className="text-yellow-600 dark:text-yellow-400">
+                          PKR {product.depositAmount.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        </p>
+                      ) : (
+                        <p className="text-gray-400 dark:text-gray-500">—</p>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* REQUIRES EMPTY RETURN (DESKTOP) */}
+                  <td className="hidden px-3 py-3 text-center sm:px-6 sm:py-4 lg:table-cell">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${product.requiresEmptyReturn ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'}`}>
+                      {product.requiresEmptyReturn ? 'Yes' : 'No'}
+                    </span>
                   </td>
 
                   {/* STATUS */}

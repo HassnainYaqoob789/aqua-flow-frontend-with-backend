@@ -227,6 +227,7 @@ export interface CreateOrderPayload {
   }[];
   paymentMethod?: "cash_on_delivery";
   acceptableDepositAmount?: number;
+  withBottles?: boolean;
 }
 
 

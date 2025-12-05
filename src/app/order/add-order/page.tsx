@@ -13,12 +13,15 @@ import {
   DollarSign,
   CreditCard,
   Truck,
-  Save,
   Plus,
+  Save,
   Minus,
   Trash2,
   Wallet,
   CheckSquare,
+  X,
+  UserPlus,
+  Info,
 } from "lucide-react";
 import { useCustomers, useDriver, useProducts } from "@/lib/api/servicesHooks";
 import { IMG_URL } from "@/lib/api/services/endpoints";
@@ -28,22 +31,13 @@ import { useDriverStore } from "@/lib/store/useDriver";
 import { useCreateOrder } from "@/lib/api/servicesHooks";
 import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/auth";
 import { useToastStore } from "@/lib/store/toastStore";
+import AddCustomerModal from "@/components/modals/AddCustomerModal";
 
-// interface OrderItem {
-// id: string;
-// name: string;
-// size: string;
-// quantity: number;
-// price: number;
-// image: string;
-// depositAmount: number;
-// }
 interface FormData {
   customer: string;
   address: string;
   items: FormOrderItem[];
   date: string;
-  // driver: "";
   zoneId: string;
   amount: string;
   payment: "COD";
@@ -52,11 +46,23 @@ interface FormData {
   recurrence: string;
   preferredTime: string;
   selectedReusableProduct: string;
+  withBottles: boolean;
 }
 
 interface Errors {
   [key: string]: string;
 }
+
+const FieldError = ({ error, id }: { error?: string; id: string }) => (
+  error ? <p className="mt-1 text-xs text-red-500" id={`${id}-error`}>{error}</p> : null
+);
+
+const FieldHelper = ({ text, className = "" }: { text: string; className?: string }) => (
+  <p className={`mt-1 text-xs text-gray-500 dark:text-gray-400 ${className}`}>
+    <Info size={12} className="inline mr-1" />
+    {text}
+  </p>
+);
 
 export default function AddOrder() {
   const router = useRouter();
@@ -77,7 +83,6 @@ export default function AddOrder() {
     address: "",
     items: [],
     date: "",
-    // driver: "",
     zoneId: "",
     amount: "0",
     payment: "COD",
@@ -86,9 +91,13 @@ export default function AddOrder() {
     recurrence: "",
     preferredTime: "",
     selectedReusableProduct: "",
+    withBottles: false,
   });
 
   const [errors, setErrors] = useState<Errors>({});
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Calculate total deposit amount from selected products
   const calculateTotalDeposit = (items: FormOrderItem[]): number => {
@@ -177,9 +186,13 @@ export default function AddOrder() {
     }
   };
 
+  const handleWithBottlesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setFormData((prev) => ({ ...prev, withBottles: isChecked }));
+  };
+
   const handleDepositTakingChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string or valid numbers
     if (value === "" || !isNaN(parseFloat(value))) {
       setFormData((prev) => ({ ...prev, depositAmountTaking: value }));
       if (errors.depositAmountTaking) {
@@ -197,7 +210,6 @@ export default function AddOrder() {
       customer: customerId,
       zoneId: selectedCustomer?.zone?.id || "",
       address: selectedCustomer?.address || "",
-      // driver: "",
     }));
 
     setErrors((prev) => ({
@@ -205,8 +217,11 @@ export default function AddOrder() {
       customer: "",
       zoneId: "",
       address: "",
-      // driver: "",
     }));
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
   };
 
   const validateForm = (): boolean => {
@@ -217,7 +232,6 @@ export default function AddOrder() {
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (formData.items.length === 0) newErrors.items = "Add at least one product";
     if (!formData.date) newErrors.date = "Delivery date is required";
-    // if (!formData.driver) newErrors.driver = "Driver is required";
 
     const totalAmount = parseFloat(formData.amount);
     if (!totalAmount || totalAmount <= 0)
@@ -241,69 +255,63 @@ export default function AddOrder() {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async () => {
-  if (!validateForm()) return;
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  if (formData.payment !== "COD") {
-    const confirmProceed = confirm(
-      "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
-    );
-    if (!confirmProceed) return;
-  }
+    if (formData.payment !== "COD") {
+      const confirmProceed = confirm(
+        "Card and Wallet payments are not yet supported. The order will be created as Cash on Delivery (COD). Continue?"
+      );
+      if (!confirmProceed) return;
+    }
 
-  try {
-    const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
+    try {
+      const depositTaking = parseFloat(formData.depositAmountTaking) || 0;
 
-    const payload: CreateOrderPayload = {
-      customerId: formData.customer,
-      deliveryDate: formData.date,
-      items: formData.items.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-      })),
-      ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
-      ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
-      ...(formData.isRecurring && {
-        isRecurring: true,
-        recurrence: formData.recurrence,
-        preferredTime: formData.preferredTime,
-      }),
-    };
+      const payload: CreateOrderPayload = {
+        customerId: formData.customer,
+        deliveryDate: formData.date,
+        items: formData.items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+        ...(formData.payment === "COD" && { paymentMethod: "cash_on_delivery" }),
+        ...(depositTaking > 0 && { acceptableDepositAmount: depositTaking }),
+        ...(formData.isRecurring && {
+          isRecurring: true,
+          recurrence: formData.recurrence,
+          preferredTime: formData.preferredTime,
+        }),
+        withBottles: formData.withBottles,
+      };
 
-    await createOrderMutation.mutateAsync(payload);
+      await createOrderMutation.mutateAsync(payload);
 
-    // Reset form only on success
-    setFormData({
-      customer: "",
-      address: "",
-      items: [],
-      date: "",
-      zoneId: "",
-      amount: "0",
-      payment: "COD",
-      depositAmountTaking: "0",
-      isRecurring: false,
-      recurrence: "",
-      preferredTime: "",
-      selectedReusableProduct: "",
-    });
+      setFormData({
+        customer: "",
+        address: "",
+        items: [],
+        date: "",
+        zoneId: "",
+        amount: "0",
+        payment: "COD",
+        depositAmountTaking: "0",
+        isRecurring: false,
+        recurrence: "",
+        preferredTime: "",
+        selectedReusableProduct: "",
+        withBottles: false,
+      });
 
-    setErrors({});
-    
-    // 🔥 Optional: show success toast
-    useToastStore.getState().addToast("Order created successfully!", "success");
+      setErrors({});
+      useToastStore.getState().addToast("Order created successfully!", "success");
 
-  } catch (err: any) {
-    console.error("Order creation failed:", err);
-
-    const message = err?.response?.data?.error 
-      || err?.message 
-      || "Failed to create order";
-
-    // 🔥 Show toast instead of alert
-    useToastStore.getState().addToast(message, "error");
-  }
-};
+    } catch (err: any) {
+      console.error("Order creation failed:", err);
+      const message = err?.response?.data?.error || err?.message || "Failed to create order";
+      useToastStore.getState().addToast(message, "error");
+    }
+  };
 
   const totalItems = formData.items.reduce((s, i) => s + i.quantity, 0);
   const totalAmount = parseFloat(formData.amount) || 0;
@@ -342,22 +350,30 @@ const handleSubmit = async () => {
                   <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <User className="h-4 w-4" /> Customer Name *
                   </label>
-                  <select
-                    name="customer"
-                    value={formData.customer}
-                    onChange={handleCustomerChange}
-                    className={`w-full rounded-lg border ${errors.customer ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-                  >
-                    <option value="">Select a customer</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.customer && (
-                    <p className="mt-1 text-xs text-red-500">{errors.customer}</p>
-                  )}
+                  <div className="flex gap-2">
+                    <select
+                      name="customer"
+                      value={formData.customer}
+                      onChange={handleCustomerChange}
+                      className={`flex-1 rounded-lg border ${errors.customer ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="p-2 rounded-md hover:bg-[#1C2434]/20 transition-all"
+                      title="Add New Customer"
+                    >
+                      <UserPlus className="h-5 w-5 text-[#1C2434]" />
+                    </button>
+                  </div>
+                  <FieldError error={errors.customer} id="customer" />
+                  <FieldHelper text="Select an existing customer or add a new one" />
                 </div>
 
                 <div>
@@ -378,6 +394,7 @@ const handleSubmit = async () => {
                   {errors.zoneId && (
                     <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>
                   )}
+                  <FieldHelper text="Zone is automatically set based on selected customer" />
                 </div>
 
                 <div>
@@ -392,83 +409,104 @@ const handleSubmit = async () => {
                     placeholder="123 Main St, Karachi"
                     className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                   />
-                  {errors.address && (
-                    <p className="mt-1 text-xs text-red-500">{errors.address}</p>
-                  )}
+                  <FieldError error={errors.address} id="address" />
+                  <FieldHelper text="Enter the full delivery address for the order" />
                 </div>
               </div>
-              {/* RECURRING ORDER SECTION */}
-              <div className="mt-6 space-y-2">
-                <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isRecurring}
-                    onChange={handleRecurringChange}
-                    className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-                  />
-                  <span>Make this a recurring order?</span>
-                </label>
 
-                {/* ERROR BELOW CHECKBOX */}
-                {formData.isRecurring && !formData.selectedReusableProduct && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Please select a reusable product before enabling recurring orders.
-                  </p>
+              {/* Order Settings Card */}
+              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+                <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Order Settings
+                </h3>
+
+                {/* RECURRING ORDER SECTION */}
+                <div className="mb-4 space-y-2">
+                  <label className="flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.isRecurring}
+                        onChange={handleRecurringChange}
+                        className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                      />
+                      <span>Sales in a recurring order?</span>
+                    </div>
+                  </label>
+
+                  {formData.isRecurring && !formData.selectedReusableProduct && (
+                    <p className="text-sm text-red-500 mt-1 pl-7">
+                      Please select a reusable product before enabling recurring orders.
+                    </p>
+                  )}
+                  {/* <FieldHelper text="Enable for automated recurring deliveries based on pattern" className="pl-7" /> */}
+                </div>
+
+                {/* WITH BOTTLES CHECKBOX */}
+
+
+                {/* RECURRING FIELDS */}
+                {formData.isRecurring && (
+                  <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Recurrence Pattern *
+                      </label>
+                      <select
+                        name="recurrence"
+                        value={formData.recurrence}
+                        onChange={handleChange}
+                        className={`w-full rounded-lg border ${errors.recurrence ? "border-red-500" : "border-gray-300"
+                          } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
+                      >
+                        <option value="">Select recurrence</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="BI_WEEKLY">Bi-weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                      </select>
+
+                      <FieldError error={errors.recurrence} id="recurrence" />
+                      <FieldHelper text="How often should this order recur?" />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Preferred Delivery Time *
+                      </label>
+                      <select
+                        name="preferredTime"
+                        value={formData.preferredTime}
+                        onChange={handleChange}
+                        className={`w-full rounded-lg border ${errors.preferredTime ? "border-red-500" : "border-gray-300"
+                          } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
+                      >
+                        <option value="">Select time</option>
+                        <option value="MORNING">Morning</option>
+                        <option value="AFTERNOON">Afternoon</option>
+                        <option value="EVENING">Evening</option>
+                      </select>
+
+                      <FieldError error={errors.preferredTime} id="preferredTime" />
+                      <FieldHelper text="Preferred time slot for recurring deliveries" />
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.withBottles}
+                          onChange={handleWithBottlesChange}
+                          className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                        />
+                        <span>With Bottles</span>
+                      </label>
+                      <FieldHelper text="Include bottles with the delivery order" className="pl-7" />
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* RECURRING FIELDS */}
-              {formData.isRecurring && (
-                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
 
-                  {/* Recurrence Pattern */}
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Recurrence Pattern *
-                    </label>
-                    <select
-                      name="recurrence"
-                      value={formData.recurrence}
-                      onChange={handleChange}
-                      className={`w-full rounded-lg border ${errors.recurrence ? "border-red-500" : "border-gray-300"
-                        } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
-                    >
-                      <option value="">Select recurrence</option>
-                      <option value="WEEKLY">Weekly</option>
-                      <option value="BI_WEEKLY">Bi-weekly</option>
-                      <option value="MONTHLY">Monthly</option>
-                    </select>
-
-                    {errors.recurrence && (
-                      <p className="mt-1 text-xs text-red-500">{errors.recurrence}</p>
-                    )}
-                  </div>
-
-                  {/* Preferred Delivery Time */}
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Preferred Delivery Time *
-                    </label>
-                    <select
-                      name="preferredTime"
-                      value={formData.preferredTime}
-                      onChange={handleChange}
-                      className={`w-full rounded-lg border ${errors.preferredTime ? "border-red-500" : "border-gray-300"
-                        } bg-white px-4 py-2 text-sm focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
-                    >
-                      <option value="">Select time</option>
-                      <option value="MORNING">Morning</option>
-                      <option value="AFTERNOON">Afternoon</option>
-                      <option value="EVENING">Evening</option>
-                    </select>
-
-                    {errors.preferredTime && (
-                      <p className="mt-1 text-xs text-red-500">{errors.preferredTime}</p>
-                    )}
-                  </div>
-
-                </div>
-              )}
 
               {/* Product Selection */}
               <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -518,6 +556,7 @@ const handleSubmit = async () => {
                 {errors.items && (
                   <p className="mt-2 text-xs text-red-500">{errors.items}</p>
                 )}
+                <FieldHelper text="Click on any product card to add it to the order. Quantity can be adjusted below." />
 
                 {/* Selected Items Table */}
                 {formData.items.length > 0 && (
@@ -635,46 +674,12 @@ const handleSubmit = async () => {
                   onChange={handleChange}
                   className={`w-full max-w-xs rounded-lg border ${errors.date ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
                 />
-                {errors.date && (
-                  <p className="mt-1 text-xs text-red-500">{errors.date}</p>
-                )}
+                <FieldError error={errors.date} id="date" />
+                <FieldHelper text="Select the scheduled delivery date for this order" />
               </div>
-
-              {/* Recurring Order Section */}
-
 
               {/* Driver & Deposit Section */}
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <Truck className="h-4 w-4" /> Driver *
-                  </label>
-                  {formData.zoneId ? (
-                    <select
-                      name="driver"
-                      value={formData.driver}
-                      onChange={handleChange}
-                      className={`w-full rounded-lg border ${errors.driver ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
-                    >
-                      <option value="">Select driver</option>
-                      {drivers
-                        .filter((d) => d.zoneId === formData.zoneId)
-                        .map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name} ({d.vehicleId || "No Vehicle"}) - ⭐{d.rating || "N/A"}
-                          </option>
-                        ))}
-                    </select>
-                  ) : (
-                    <div className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-500 dark:bg-gray-700">
-                      Select a customer first to see available drivers
-                    </div>
-                  )}
-                  {errors.driver && (
-                    <p className="mt-1 text-xs text-red-500">{errors.driver}</p>
-                  )}
-                </div> */}
-
                 {totalDeposit > 0 && (
                   <div>
                     <label className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -686,9 +691,7 @@ const handleSubmit = async () => {
                       readOnly
                       className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-orange-600 dark:text-orange-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Auto-calculated from selected products
-                    </p>
+                    <FieldHelper text="Auto-calculated from selected products" />
                   </div>
                 )}
               </div>
@@ -713,12 +716,8 @@ const handleSubmit = async () => {
                     placeholder="0.00"
                     className={`w-full max-w-xs rounded-lg border ${errors.depositAmountTaking ? "border-red-500" : "border-gray-300"} bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
                   />
-                  {errors.depositAmountTaking && (
-                    <p className="mt-1 text-xs text-red-500">{errors.depositAmountTaking}</p>
-                  )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Enter the deposit amount youre collecting from the customer
-                  </p>
+                  <FieldError error={errors.depositAmountTaking} id="depositAmountTaking" />
+                  <FieldHelper text="Enter the deposit amount you're collecting from the customer" />
                 </div>
               )}
 
@@ -733,9 +732,7 @@ const handleSubmit = async () => {
                   readOnly
                   className="w-full max-w-xs rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-lg font-bold cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Product Total + Deposit Taking = PKR {productTotal.toFixed(2)} + PKR {parseFloat(formData.depositAmountTaking || "0").toFixed(2)}
-                </p>
+                <FieldHelper text={`Product Total + Deposit Taking = PKR ${productTotal.toFixed(2)} + PKR ${parseFloat(formData.depositAmountTaking || "0").toFixed(2)}`} />
               </div>
 
               {/* Payment Method */}
@@ -751,6 +748,7 @@ const handleSubmit = async () => {
                 >
                   <option value="COD">Cash on Delivery</option>
                 </select>
+                <FieldHelper text="Currently only Cash on Delivery is supported" />
               </div>
 
               {/* Submit */}
@@ -766,6 +764,11 @@ const handleSubmit = async () => {
           </div>
         </div>
       </div>
+
+      <AddCustomerModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+      />
     </DefaultLayout>
   );
 }

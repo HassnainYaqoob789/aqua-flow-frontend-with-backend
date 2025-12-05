@@ -12,11 +12,15 @@ import { updateOrder } from "@/lib/store/useOrder"; // Import updateOrder direct
 
 // Helper to format items (you can adjust according to your actual item structure)
 const formatItems = (items: any[]) => {
-  if (!items || items.length === 0) return "—";
+  if (!items?.length) return "—";
+
   return items
-    .map((item) => `${item.quantity || 1}x ${item.product?.name || "Item"}`)
+    .map((i) => `${i.product?.name || "Item"} (x${i.quantity || 1})`)
     .join(", ");
 };
+
+
+
 
 // Helper to format delivery date (you have deliveryDate in API)
 const formatDeliveryDate = (dateString: string) => {
@@ -154,22 +158,12 @@ export default function OrderManagement() {
   useDriver();
   const drivers = useDriverStore((state) => state.state.drivers);
 
-  // const { mutate: assignDriverMutation, isPending: isAssigning } = useAssignDriver({
-  //   onSuccess: (updatedOrder) => {
-  //     updateOrder(updatedOrder);
-  //   },
-  //   onError: (error) => {
-  //     console.error("Failed to assign driver:", error);
-  //   }
-  // });
-
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   console.log("drivers", drivers);
 
   const handleAssignDriver = (orderId: number, driverId: number) => {
-    // assignDriverMutation({ orderId, driverId });
     setShowModal(false);
     setSelectedOrder(null);
   };
@@ -352,11 +346,6 @@ export default function OrderManagement() {
                           order.status
                         )}`}
                       >
-                        {/* {isPending && !hasDriver
-                          ? "Pending Assignment"
-                          : hasDriver
-                            ? "Assigned"
-                            : formatStatus(order.status)} */}
                         {order?.status}
                       </span>
                     </td>
@@ -458,19 +447,6 @@ export default function OrderManagement() {
           );
         })}
       </div>
-
-      {/* <AssignDriverModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setSelectedOrder(null);
-        }}
-        order={selectedOrder}
-        drivers={drivers}
-        // isAssigning={isAssigning}
-        onAssign={handleAssignDriver}
-      /> */}
-
     </DefaultLayout>
   );
 }

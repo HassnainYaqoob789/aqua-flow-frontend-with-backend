@@ -304,7 +304,7 @@ export default function ProductEditPage() {
                                 onChange={handleInputChange}
                                 className="w-4 h-4"
                             />
-                            <span className="font-semibold">Is the Bottle Reusable?</span>
+                            <span className="font-semibold">Is the Product Reusable?</span>
                         </label>
 
                         {formData.isReusable && (
@@ -336,7 +336,7 @@ export default function ProductEditPage() {
                                         className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                                     />
                                     <span className="font-medium text-black dark:text-gray-200">
-                                        Return of Empty Bottle Required
+                                        Return of Empty Product Required
                                     </span>
                                 </label>
                             </div>
