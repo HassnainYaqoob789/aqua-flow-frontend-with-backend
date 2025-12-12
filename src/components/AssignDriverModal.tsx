@@ -62,7 +62,7 @@ const AssignDriverModal: React.FC<AssignDriverModalProps> = ({ isOpen, onClose, 
           {/* Drivers List */}
           <div className="px-4 py-4">
             <ul className="divide-y divide-gray-200">
-              {availableDrivers.map((driver) => (
+              {/* {availableDrivers.map((driver) => (
                 <li key={driver.id}>
                   <label className="flex items-center justify-between py-3">
                     <div className="flex items-center">
@@ -80,7 +80,7 @@ const AssignDriverModal: React.FC<AssignDriverModalProps> = ({ isOpen, onClose, 
                     </div>
                   </label>
                 </li>
-              ))}
+              ))} */}
             </ul>
           </div>
         </div>

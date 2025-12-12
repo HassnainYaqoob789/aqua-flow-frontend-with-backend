@@ -27,7 +27,7 @@ export default function ProductRevenueChart({
               {item.product}
             </span>
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
-              ${item.revenue.toLocaleString()}
+              RS {item.revenue.toLocaleString()}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">

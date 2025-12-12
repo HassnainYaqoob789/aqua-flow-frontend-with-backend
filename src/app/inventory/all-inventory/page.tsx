@@ -20,10 +20,12 @@ import { useInventoryStore } from "@/lib/api/servicesHooks";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { useRouter } from "next/navigation";
+import AddQuantityModal from "@/components/modals/AddQuantityModal";
 
 export default function InventoryManagement() {
   const { data, isLoading, isError, refetch } = useInventoryStore();
   const router = useRouter();
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
 
   // Loading state
   if (isLoading) {
@@ -45,23 +47,23 @@ export default function InventoryManagement() {
     );
   }
 
-const {
-  totalBottles,
-  inStock,
-  withCustomers,
-  totalSecurityDeposit,
-  lowStockAlert,
-  lowStockMessage,
-  bottleStockLevels = [],
-  recentTransactions = [],
-  emptiesTracking = [],
-  productInventories = [], // Keep defaults for arrays if they might be undefined
-  globalReusablePool, // Remove = {} to use type from InventoryResponse
-} = data;
+  const {
+    totalBottles,
+    inStock,
+    withCustomers,
+    totalSecurityDeposit,
+    lowStockAlert,
+    lowStockMessage,
+    bottleStockLevels = [],
+    recentTransactions = [],
+    emptiesTracking = [],
+    productInventories = [], // Keep defaults for arrays if they might be undefined
+    globalReusablePool, // Remove = {} to use type from InventoryResponse
+  } = data;
 
   const totalActiveBottles = totalBottles; // Fallback calculation if needed
   const handleAddInventory = () => {
-    router.push("/inventory/add-inventory");
+    setIsAddModalOpen(true);
   };
   return (
     <DefaultLayout>
@@ -343,6 +345,12 @@ const {
           </div>
         </div>
       </div>
+      <AddQuantityModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => refetch()}
+      />
+
     </DefaultLayout>
   );
 }

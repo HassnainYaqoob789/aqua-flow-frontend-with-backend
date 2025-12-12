@@ -22,7 +22,6 @@ export default function CustomerManagement() {
   const { data: dataaa, isLoading, isError } = useCustomers();
   const { mutate: updateStatus, isPending } = useStatusCustomer();
 
-  // Use API data if available, otherwise use empty array
   const customers = dataaa?.customers || [];
 
   const [activeTab, setActiveTab] = useState("All");
@@ -87,23 +86,23 @@ export default function CustomerManagement() {
     `Inactive (${dataaa?.counts?.inactiveCustomers || 0})`,
   ];
 
-const normalize = (str: string | null | undefined): string => 
-  str?.toLowerCase() ?? "";
+  const normalize = (str: string | null | undefined): string =>
+    str?.toLowerCase() ?? "";
 
-const filteredCustomers = customers.filter((customer) => {
-  const searchLower = searchTerm.toLowerCase();
+  const filteredCustomers = customers.filter((customer) => {
+    const searchLower = searchTerm.toLowerCase();
 
-  const matchesSearch =
-    customer.name.toLowerCase().includes(searchLower) ||
-    normalize(customer.email).includes(searchLower) ||
-    customer.phone.includes(searchTerm); // or .toLowerCase() if phone has letters
+    const matchesSearch =
+      customer.name.toLowerCase().includes(searchLower) ||
+      normalize(customer.email).includes(searchLower) ||
+      customer.phone.includes(searchTerm);
 
-  return matchesSearch && (
-    activeTab === "All" ||
-    (activeTab === "Active" && customer.status === "active") ||
-    (activeTab === "Inactive" && customer.status === "inactive")
-  );
-});
+    return matchesSearch && (
+      activeTab === "All" ||
+      (activeTab === "Active" && customer.status === "active") ||
+      (activeTab === "Inactive" && customer.status === "inactive")
+    );
+  });
 
   return (
     <DefaultLayout>
@@ -113,7 +112,6 @@ const filteredCustomers = customers.filter((customer) => {
       />
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* Header */}
         <div className="border-b border-gray-200 bg-white px-3 py-4 dark:border-gray-700 dark:bg-gray-800 sm:px-6 sm:py-8">
           <div className="flex justify-end">
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
@@ -128,7 +126,6 @@ const filteredCustomers = customers.filter((customer) => {
         </div>
 
         <div className="p-3 sm:p-6">
-          {/* Search and Filters */}
           <div className="mb-6 flex flex-col gap-3 sm:gap-4 md:flex-row">
             <div className="relative flex-1">
               <Search
@@ -143,13 +140,8 @@ const filteredCustomers = customers.filter((customer) => {
                 className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-xs outline-none placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-blue-400 sm:text-sm"
               />
             </div>
-            {/* <button className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 sm:text-sm">
-              <Filter size={16} className="sm:size-[18px]" />
-              <span>Filter</span>
-            </button> */}
           </div>
 
-          {/* Stats Cards */}
           <div className="mb-6 grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3">
             {stats.map((stat, idx) => (
               <div
@@ -168,7 +160,6 @@ const filteredCustomers = customers.filter((customer) => {
             ))}
           </div>
 
-          {/* Filter Tabs */}
           <div className="mb-6 flex gap-2 overflow-x-auto pb-2 sm:pb-0">
             {tabs.map((tab, idx) => (
               <button
@@ -184,7 +175,6 @@ const filteredCustomers = customers.filter((customer) => {
             ))}
           </div>
 
-          {/* Loading State */}
           {isLoading && (
             <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="text-center">
@@ -196,7 +186,6 @@ const filteredCustomers = customers.filter((customer) => {
             </div>
           )}
 
-          {/* Error State */}
           {isError && (
             <div className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-8 shadow-sm dark:border-red-800 dark:bg-red-900/20">
               <div className="text-center">
@@ -208,7 +197,6 @@ const filteredCustomers = customers.filter((customer) => {
             </div>
           )}
 
-          {/* Customers Table - Responsive */}
           {!isLoading && !isError && (
             <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <table className="w-full min-w-full">
@@ -220,16 +208,13 @@ const filteredCustomers = customers.filter((customer) => {
                     <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
                       Contact & Location
                     </th>
-
+                    <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm md:table-cell">
+                      Zone
+                    </th>
                     <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm lg:table-cell">
-                      Last Order
+                      Security Deposit
                     </th>
-                    <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm xl:table-cell">
-                      Financial
-                    </th>
-                    <th className="hidden px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm xl:table-cell">
-                      Bottles & Empties
-                    </th>
+
                     <th className="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white sm:px-6 sm:py-4 sm:text-sm">
                       Status
                     </th>
@@ -269,19 +254,19 @@ const filteredCustomers = customers.filter((customer) => {
                                 📍 {customer.address}, {customer.city}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">
+                                🗺️ {customer.zone?.name || 'N/A'}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
                                 Total Spent: PKR{(customer.totalSpent ?? 0).toLocaleString()}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">
                                 Due: PKR{(customer.dueAmount ?? 0).toLocaleString()}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">
-                                Deposit: PKR{(customer.securityDeposit ?? 0).toLocaleString()}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-300">
                                 Bottles: {customer.bottlesGiven ?? 0}, Empties: {customer.empties ?? 0}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">
-                                Last Order: {lastOrderDate}
+                                Security Deposit:{customer.securityDeposit ?? 0}
                               </p>
                             </div>
                           </div>
@@ -302,35 +287,33 @@ const filteredCustomers = customers.filter((customer) => {
                             </p>
                           </div>
                         </td>
+                        <td className="hidden px-3 py-3 sm:px-6 sm:py-4 md:table-cell">
+                          <div className="text-xs sm:text-sm">
+                            <p className="inline-block 
+    px-3 py-1 
+    text-xs font-semibold 
+    text-orange-700 
+    bg-orange-100 
+    dark:text-orange-300 
+    dark:bg-orange-900/30 
+    rounded-md">
+                              {customer.zone?.name || 'N/A'}
+                            </p>
+                          </div>
+                        </td>
                         <td className="hidden px-3 py-3 sm:px-6 sm:py-4 lg:table-cell">
-                          <div className="text-xs sm:text-sm">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {lastOrderDate}
-                            </p>
+                          <div
+                            className="inline-flex items-center gap-1 px-2 py-0.5 
+             text-xs font-medium 
+             text-purple-700 bg-purple-100 
+             dark:text-purple-200 dark:bg-purple-800/40 
+             border border-purple-300 dark:border-purple-700
+             rounded-sm"
+                          >
+                            <span className="opacity-80">Security Deposit:</span>
+                            <span className="font-semibold">{customer.securityDeposit ?? "-"}</span>
                           </div>
-                        </td>
-                        <td className="hidden px-3 py-3 sm:px-6 sm:py-4 xl:table-cell">
-                          <div className="text-xs sm:text-sm">
-                            <p className="text-gray-900 dark:text-white">
-                              Total: {(customer.totalSpent ?? 0).toLocaleString()}
-                            </p>
-                            <p className="text-xs text-red-600 dark:text-red-400">
-                              Due: {(customer.dueAmount ?? 0).toLocaleString()}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Deposit: {(customer.securityDeposit ?? 0).toLocaleString()}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="hidden px-3 py-3 sm:px-6 sm:py-4 xl:table-cell">
-                          <div className="text-xs sm:text-sm">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              Bottles: {customer.bottlesGiven}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Empties: {customer.empties}
-                            </p>
-                          </div>
+
                         </td>
                         <td className="px-3 py-3 sm:px-6 sm:py-4">
                           <span
@@ -365,7 +348,6 @@ const filteredCustomers = customers.filter((customer) => {
                                 />
                               </button>
 
-                              {/* Dropdown Menu - Shows opposite status */}
                               {openId === customer.id && (
                                 <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
                                   {customer.status === "active" ? (

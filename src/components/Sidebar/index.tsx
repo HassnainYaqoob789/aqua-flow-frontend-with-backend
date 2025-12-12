@@ -45,11 +45,6 @@ const menuGroups = [
         label: "All Orders",
         route: "/order/all-orders",
       },
-      {
-        icon: <PackageSearch className="h-5 w-5" />,
-        label: "All Products",
-        route: "/products/all-products",
-      },
     ],
   },
   {
@@ -78,6 +73,16 @@ const menuGroups = [
     ],
   },
   {
+    name: "PRODUCTS",
+    menuItems: [
+      {
+        icon: <PackageSearch className="h-5 w-5" />,
+        label: "All Products",
+        route: "/products/all-products",
+      },
+    ],
+  },
+  {
     name: "FINANCE & REPORTS",
     menuItems: [
       {
@@ -96,15 +101,15 @@ const menuGroups = [
       //   label: "All Expenses",
       //   route: "/expenses/all-expenses",
       // },
-      {
-        icon: <FileText className="h-5 w-5" />,
-        label: "Billing & Recoveries",
-        route: "/billing-recoveries",
-      },
+      // {
+      //   icon: <FileText className="h-5 w-5" />,
+      //   label: "Billing & Recoveries",
+      //   route: "/billing-recoveries",
+      // },
 
       {
         icon: <FileText className="h-5 w-5" />,
-        label: "Reports",
+        label: "Billing & Reports",
         route: "/reports",
       },
     ],

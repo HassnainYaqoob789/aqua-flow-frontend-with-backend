@@ -25,14 +25,22 @@ interface Zone {
   name: string;
 }
 
+interface AssignmentStats {
+  in_progress?: number;
+  out_for_delivery?: number;
+  delivered?: number;
+  totalAssigned: number;
+  isFree: boolean;
+}
+
 interface Driver {
   id: string;
   name: string;
   phone: string;
-  vehicleId: string;
+  vehicleNumber: string;
   zoneId: string;
   status: "active" | "inactive";
-  rating: number;
+  rating: number | null;
   totalDeliveries: number;
   todayDeliveries: number;
   createdAt: string;
@@ -40,14 +48,15 @@ interface Driver {
   tenantId: string;
   userId: string | null;
   zone: Zone;
-  totalRatings: number
+  totalRatings: number;
+  assignmentStats: AssignmentStats;
 }
 
 interface Stats {
   totalDrivers: number;
-  activeNow: number;
+  activeDrivers: number;
   deliveriesToday: number;
-  activeRoutes: number;
+  totalDeliveriesEver: number;
 }
 
 interface DriverResponse {
@@ -68,9 +77,9 @@ export default function DriverRouteManagement() {
   const drivers = driverData?.drivers || [];
   const stats = driverData?.stats || {
     totalDrivers: 0,
-    activeNow: 0,
+    activeDrivers: 0,
     deliveriesToday: 0,
-    activeRoutes: 0,
+    totalDeliveriesEver: 0,
   };
 
   // Filter drivers based on search and status
@@ -79,7 +88,7 @@ export default function DriverRouteManagement() {
       const matchesSearch =
         driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         driver.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        driver.vehicleId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        driver.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         driver.phone.includes(searchQuery);
 
       const matchesStatus =
@@ -208,10 +217,10 @@ export default function DriverRouteManagement() {
         </div>
         <div className="relative rounded-sm border border-stroke bg-white px-4 py-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-6">
           <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-            Active Now
+            Active Drivers
           </p>
           <p className="text-2xl font-bold text-green-600 sm:text-3xl">
-            {stats.activeNow}
+            {stats.activeDrivers}
           </p>
           <div className="absolute right-3 top-3 text-green-400">
             <Wifi size={16} />
@@ -228,6 +237,17 @@ export default function DriverRouteManagement() {
             <Truck size={16} />
           </div>
         </div>
+        <div className="relative rounded-sm border border-stroke bg-white px-4 py-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-6">
+          <p className="mb-1 text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
+            Total Deliveries
+          </p>
+          <p className="text-2xl font-bold text-purple-600 sm:text-3xl">
+            {stats.totalDeliveriesEver}
+          </p>
+          <div className="absolute right-3 top-3 text-purple-400">
+            <Truck size={16} />
+          </div>
+        </div>
       </div>
       <div className="hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark lg:block">
         <div className="overflow-x-auto">
@@ -237,18 +257,16 @@ export default function DriverRouteManagement() {
                 <th className="px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
                   Driver
                 </th>
+                <th className="px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
+                  Drivers Current Status
+                </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Contact
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Zone & Vehicle
+                  Vehicle No
                 </th>
-                <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Deliveries
-                </th>
-                <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Performance
-                </th>
+
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Mode
                 </th>
@@ -287,39 +305,53 @@ export default function DriverRouteManagement() {
                         </div>
                       </div>
                     </td>
+                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark text-left">
+                      {driver.assignmentStats.isFree ? (
+                        <span className="inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-800/20 dark:text-green-200">
+                          Available
+                        </span>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-block rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-800 dark:bg-orange-800/20 dark:text-orange-200">
+                            On Delivery
+                          </span>
+                          <div className="flex flex-wrap gap-1 text-xs">
+                            {(driver.assignmentStats.delivered ?? 0) > 0 && (
+                              <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-800 font-semibold dark:bg-purple-800/20 dark:text-purple-200">
+                                Total Assigned: {driver.assignmentStats.totalAssigned}
+                              </span>
+                            )}
+                            {(driver.assignmentStats.in_progress ?? 0) > 0 && (
+                              <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-200">
+                                Pending : {driver.assignmentStats.in_progress}
+                              </span>
+                            )}
+                            {(driver.assignmentStats.out_for_delivery ?? 0) > 0 && (
+                              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-200">
+                                On Route: {driver.assignmentStats.out_for_delivery}
+                              </span>
+                            )}
+                            {(driver.assignmentStats.delivered ?? 0) > 0 && (
+                              <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-200">
+                                Delivered: {driver.assignmentStats.delivered}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </td>
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       <p className="text-black dark:text-white">
                         {driver.phone}
                       </p>
                     </td>
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      <div>
-                        <p className="text-black dark:text-white">
-                          {driver.zone.name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {driver.vehicleId}
-                        </p>
-                      </div>
+                      <span className="inline-block px-2 py-1 bg-black text-white text-sm font-semibold dark:bg-gray-800 dark:text-white">
+                        {driver.vehicleNumber}
+                      </span>
                     </td>
-                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      <div>
-                        <span className="text-sm font-medium text-black dark:text-white">
-                          Today: {driver.todayDeliveries}
-                        </span>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Total: {driver.totalDeliveries}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-current text-yellow-500" />
-                        <span className="text-sm font-medium text-black dark:text-white">
-                          {driver.totalRatings?.toFixed(1) ?? "0.0"}
-                        </span>
-                      </div>
-                    </td>
+
+
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
@@ -342,7 +374,7 @@ export default function DriverRouteManagement() {
                         </Link>
 
                         <div className="relative">
-                          <button 
+                          <button
                             onClick={() => setOpenId(openId === driver.id ? null : driver.id)}
                             className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
                           >
@@ -423,7 +455,7 @@ export default function DriverRouteManagement() {
                   </Link>
 
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setOpenId(openId === driver.id ? null : driver.id)}
                       className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
@@ -481,8 +513,48 @@ export default function DriverRouteManagement() {
                       {driver.zone.name}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {driver.vehicleId}
+                      {driver.vehicleNumber}
                     </div>
+                  </div>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    <Truck className="inline h-3 w-3" /> Current Status:
+                  </span>
+                  <div className="text-right">
+                    {driver.assignmentStats.isFree ? (
+                      <span className="inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-800/20 dark:text-green-200">
+                        Available
+                      </span>
+                    ) : (
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="inline-block rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-800 dark:bg-orange-800/20 dark:text-orange-200">
+                          On Delivery
+                        </span>
+                        <div className="flex flex-wrap justify-end gap-1 text-xs">
+                          {(driver.assignmentStats.delivered ?? 0) > 0 && (
+                            <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-800 font-semibold dark:bg-purple-800/20 dark:text-purple-200">
+                              Total Assigned: {driver.assignmentStats.totalAssigned}
+                            </span>
+                          )}
+                          {(driver.assignmentStats.in_progress ?? 0) > 0 && (
+                            <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-200">
+                              Pending: {driver.assignmentStats.in_progress}
+                            </span>
+                          )}
+                          {(driver.assignmentStats.out_for_delivery ?? 0) > 0 && (
+                            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-200">
+                              On Route: {driver.assignmentStats.out_for_delivery}
+                            </span>
+                          )}
+                          {(driver.assignmentStats.delivered ?? 0) > 0 && (
+                            <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-200">
+                              Delivered: {driver.assignmentStats.delivered}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -509,7 +581,7 @@ export default function DriverRouteManagement() {
                 </div>
                 <div className="flex items-center justify-between pt-2 text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    Status:
+                    Mode:
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(

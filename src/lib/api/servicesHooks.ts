@@ -1,5 +1,5 @@
 import { createQueryFactory, createMutationFactory, createQueryFactoryWithParams } from "@/lib/api/queryFactory";
-import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts, statusProduct, statusUpdateDriver, statusZone } from "./apiFactory";
+import { loginUser, getCustomers, createCustomer, updateCustomer, statusCustomer, createZone, getZones, createProducts, getProducts, createDriver, getDrivers, createOrder, getOrders, createProductWithImage, getInventory, createInventory, getCustomerByZone, bulkAssignDriver, assignDriver, updateZone, deleteZone, updateDriver, createUser, getUsers, updateProducts, statusProduct, statusUpdateDriver, statusZone, getReports, getUsersStats, getOrdersPaginated } from "./apiFactory";
 import { setCustomers, addCustomer, update_Customer, status_Customer } from "../store/useCustomerStore";
 import { addZone, delete_Zone, setZone, status_Zone, update_Zone } from "../store/useZoneStore";
 import { addProducts, setProducts, status_Product, update_Products } from "../store/useProduct";
@@ -9,12 +9,16 @@ import { addProducts, setProducts, status_Product, update_Products } from "../st
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { AssignDriverPayload, BulkAssignPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/auth";
+import { AssignDriverPayload, BulkAssignPayload, CreateOrderPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, GetOrdersResponse, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/auth";
 import { addDriver, setDrivers, status_Driver, status_update_Driver, update_Driver, useDriverStore } from "../store/useDriver";
-import { addOrder, setOrders, updateOrder } from "../store/useOrder";
+import {
+  // addOrder,
+  setOrders, updateOrder
+} from "../store/useOrder";
 import { setInventory, updateInventory } from "../store/inventoryStore";
 import { useToastStore } from '../store/toastStore';
-import { addUser, setUsers } from "../store/useUserStore";
+import { addUser, setUsers, setUsersStats } from "../store/useUserStore";
+import { setReports } from "../store/reportsStore";
 
 export const useLogin = () => {
   const router = useRouter();
@@ -85,7 +89,7 @@ export const useUpdateZone = createMutationFactory(
 export const useDeleteZone = createMutationFactory<Zone, string>(
   "zones",
   deleteZone,
-  (data) => delete_Zone(data) 
+  (data) => delete_Zone(data)
 );
 
 
@@ -190,12 +194,17 @@ export const useStatusUpdateDriver = createMutationFactory<Driver, StatusPayload
 
 // =============================================ORDERS HOOKS=========================
 
-export const useCreateOrder = createMutationFactory(
+// export const useCreateOrder = createMutationFactory(
+//   "orders",
+//   createOrder,
+//   (data) => addOrder(data)
+// );
+export const useCreateOrder = createMutationFactory<Order, Partial<CreateOrderPayload>>(
   "orders",
-  createOrder,
-  (data) => addOrder(data)
+  createOrder
+  // Remove the third parameter completely
+  // No onSuccess callback needed here — the factory already invalidates!
 );
-
 
 
 
@@ -205,6 +214,16 @@ export const useOrderStore = createQueryFactory("orders", async () => {
   setOrders(data.orders);
   return data;
 });
+
+export const useOrdersQuery = createQueryFactoryWithParams<
+  GetOrdersResponse,
+  { page: number; limit: number }
+>("orders", getOrdersPaginated);
+export const useOrderStatsStore = createQueryFactory("ordersStats", async () => {
+});
+
+
+
 
 
 export const useAssignDriver = (options?: {
@@ -273,9 +292,21 @@ export const useUsers = createQueryFactory("users", async () => {
 
 
 
+export const useUsersStats = createQueryFactory("usersStats", async () => {
+  const data = await getUsersStats();
+
+  setUsersStats(data);
+});
+
+
 
 // ============================================USER HOOK API==================================
 
 
 
 
+export const useReportStore = createQueryFactory("reports", async () => {
+  const data = await getReports();
+  setReports(data);
+  return data;
+});

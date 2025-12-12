@@ -10,6 +10,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Metadata } from "next";
+import { useUsersStats } from "@/lib/api/servicesHooks";
+import { useUserStore } from "@/lib/store/useUserStore";
 
 // Dynamic imports for charts to avoid SSR issues
 const ChartOne = dynamic(() => import("@/components/Charts/ChartOne"), { ssr: false });
@@ -25,7 +27,7 @@ interface StatData {
   value: string;
   rate: string;
   trend: "up" | "down";
-  icon: React.ComponentType<{ className?: string; size?: number }>;  // Explicit Lucide icon type
+  icon: React.ComponentType<{ className?: string; size?: string | number }>;
   bgColor: string;
 }
 
@@ -43,40 +45,50 @@ interface TopCustomer {
 }
 
 export default function DashboardPage() {
-  const statsData: StatData[] = [
-    {
-      title: "Total Orders",
-      value: "1,234",
-      rate: "+12.5%",
-      trend: "up",
-      icon: ShoppingCart as React.ComponentType<{ className?: string; size?: number }>,  // Type assertion for TS
-      bgColor: "bg-blue-100 dark:bg-blue-900/30",
-    },
-    {
-      title: "Revenue",
-      value: "$45,680",
-      rate: "+4.2%",
-      trend: "up",
-      icon: TrendingUp as React.ComponentType<{ className?: string; size?: number }>,
-      bgColor: "bg-green-100 dark:bg-green-900/30",
-    },
-    {
-      title: "Active Customers",
-      value: "856",
-      rate: "+8.1%",
-      trend: "up",
-      icon: Users2 as React.ComponentType<{ className?: string; size?: number }>,
-      bgColor: "bg-purple-100 dark:bg-purple-900/30",
-    },
-    {
-      title: "Active Deliveries",
-      value: "24",
-      rate: "-3.2%",
-      trend: "down",
-      icon: Truck as React.ComponentType<{ className?: string; size?: number }>,
-      bgColor: "bg-orange-100 dark:bg-orange-900/30",
-    },
-  ];
+  const { data, isLoading, isError } = useUsersStats();
+  const usersStats = useUserStore(state => state.state.usersStats);
+
+
+  const statsData: StatData[] = React.useMemo(() => {
+    return [
+      {
+        title: "Total Orders",
+        value: usersStats?.usersStats?.totalCount?.toString() ?? "0",
+        rate: "+12.5%",
+        trend: "up",
+        icon: ShoppingCart,
+        bgColor: "bg-blue-100 dark:bg-blue-900/30",
+      },
+      {
+        title: "Revenue",
+        value: "$45,680",
+        rate: "+4.2%",
+        trend: "up",
+        icon: TrendingUp,
+        bgColor: "bg-green-100 dark:bg-green-900/30",
+      },
+      {
+        title: "Active Customers",
+        value: usersStats?.usersStats?.totalCount?.toString() ?? "0",
+        rate: `${usersStats?.usersStats?.recentUsersPercentage ?? 0}%`,
+        trend: "up",
+        icon: Users2,
+        bgColor: "bg-purple-100 dark:bg-purple-900/30",
+      },
+      {
+        title: "Active Deliveries",
+        value: "24",
+        rate: "-3.2%",
+        trend: "down",
+        icon: Truck,
+        bgColor: "bg-orange-100 dark:bg-orange-900/30",
+      },
+    ];
+  }, [usersStats]);
+
+
+
+
 
   const recentOrders: RecentOrder[] = [
     { id: "P1234", status: "In progress", amount: "$240", time: "2 days ago" },
@@ -144,9 +156,8 @@ export default function DashboardPage() {
                     <Icon size={24} className="text-gray-700 dark:text-gray-300" />
                   </div>
                   <span
-                    className={`text-sm font-medium ${
-                      isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                    }`}
+                    className={`text-sm font-medium ${isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                      }`}
                   >
                     {stat.rate}
                   </span>

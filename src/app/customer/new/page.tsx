@@ -1,26 +1,30 @@
 "use client";
 
 import React, { useState, FormEvent, useEffect } from "react";
-import { ArrowLeft, Mail, Phone, MapPin, User, Globe, Save } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, User, Globe, Save, Plus, MapPinPlus } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import { useCreateCustomer } from "@/lib/api/servicesHooks";
+import { useCreateCustomer, useCreateZone, useZone } from "@/lib/api/servicesHooks";
 import { useZoneStore } from "@/lib/store/useZoneStore";
-import { useZone } from "@/lib/api/servicesHooks";
 import { Zone } from "@/lib/types/auth";
 import { useRouter } from "next/navigation";
+import AddZoneModal from "@/components/modals/AddZoneModal";
+
+interface ZoneFormData {
+  name: string;
+  description: string;
+}
+
 export default function AddCustomer() {
   const router = useRouter();
-
   const createCustomerMutation = useCreateCustomer();
-
-  const { data: dataaa, isLoading, isError } = useZone();
+  const { data: dataaa, isLoading, isError, refetch: refetchZones } = useZone();
   const zones = useZoneStore((s) => s.state.zone) || [];
+  const activeZones = zones.filter((z: Zone) => z.status === "active");
 
   const setZones = (zonesArray: Zone[]) =>
     useZoneStore.getState().setState({ zone: zonesArray });
 
-  console.log("Zones data:", dataaa);
 
   useEffect(() => {
     if (dataaa?.zones) {
@@ -39,18 +43,43 @@ export default function AddCustomer() {
     zoneId: "",
   });
 
+  const [isZoneModalOpen, setIsZoneModalOpen] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [pendingZoneId, setPendingZoneId] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
+
+  useEffect(() => {
+    if (pendingZoneId && zones.length > 0) {
+      const zoneExists = zones.some((zone: Zone) => zone.id === pendingZoneId);
+      if (zoneExists) {
+        console.log("Setting zone to:", pendingZoneId);
+        setFormData((prev) => ({
+          ...prev,
+          zoneId: pendingZoneId,
+        }));
+        setPendingZoneId(null);
+        if (errors.zoneId) {
+          setErrors((prev) => ({ ...prev, zoneId: "" }));
+        }
+      }
+    }
+  }, [zones, pendingZoneId]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Valid email is required";
@@ -94,6 +123,11 @@ export default function AddCustomer() {
     );
   };
 
+  const handleZoneCreated = async (newZoneId: string) => {
+    setPendingZoneId(newZoneId);
+    await refetchZones();
+  };
+
   return (
     <DefaultLayout>
       <Breadcrumb
@@ -130,6 +164,21 @@ export default function AddCustomer() {
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+                <Phone className="inline mr-2 h-4 w-4" />
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Enter phone number"
+                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+              />
+              {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+            </div>
           </div>
 
           {/* Contact Info */}
@@ -152,18 +201,45 @@ export default function AddCustomer() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-                <Phone className="inline mr-2 h-4 w-4" />
-                Phone Number *
+                <MapPin className="inline mr-2 h-4 w-4" />
+                Zone *
               </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter phone number"
-                className={`w-full rounded-lg border ${errors.phone ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-              />
-              {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+              <div className="flex gap-2">
+                {isLoading ? (
+                  <p className="text-sm text-gray-500">Loading zones...</p>
+                ) : isError ? (
+                  <p className="text-sm text-red-500">Failed to load zones</p>
+                ) : (
+                  <>
+                    <select
+                      name="zoneId"
+                      value={formData.zoneId}
+                      onChange={handleChange}
+                      className={`flex-1 rounded-lg border ${errors.zoneId ? "border-red-500" : "border-stroke"
+                        } py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
+                    >
+                      <option value="">Select Zone</option>
+
+                      {activeZones.length > 0 &&
+                        activeZones.map((zone: Zone) => (
+                          <option key={zone.id} value={zone.id}>
+                            {zone.name}
+                          </option>
+                        ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsZoneModalOpen(true)}
+                      className="flex h-10 items-center justify-center rounded-lg bg-[#1C2434] px-3 text-white transition-colors hover:bg-[#1C2434]/80"
+                      title="Add New Zone"
+                    >
+                      <MapPinPlus size={16} className="text-white" />
+                    </button>
+                  </>
+                )}
+              </div>
+              {errors.zoneId && <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>}
             </div>
           </div>
 
@@ -171,44 +247,17 @@ export default function AddCustomer() {
           <div>
             <label className="mb-2 block text-sm font-medium text-black dark:text-white">
               <MapPin className="inline mr-2 h-4 w-4" />
-              Street Address *
+              Address*
             </label>
-            <input
-              type="text"
+            <textarea
               name="address"
               value={formData.address}
               onChange={handleChange}
               placeholder="Enter full street address"
+              rows={3}
               className={`w-full rounded-lg border ${errors.address ? "border-red-500" : "border-stroke"} bg-transparent py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
             />
             {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
-              <MapPin className="inline mr-2 h-4 w-4" />
-              Zone *
-            </label>
-            {isLoading ? (
-              <p className="text-sm text-gray-500">Loading zones...</p>
-            ) : isError ? (
-              <p className="text-sm text-red-500">Failed to load zones</p>
-            ) : (
-              <select
-                name="zoneId"
-                value={formData.zoneId}
-                onChange={handleChange}
-                className={`w-full rounded-lg border ${errors.zoneId ? "border-red-500" : "border-stroke"} py-2 px-4 text-sm outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary`}
-              >
-                <option value="">Select Zone</option>
-                {zones.length > 0 &&
-                  zones.map((zone: Zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </option>
-                  ))}
-              </select>
-            )}
-            {errors.zoneId && <p className="mt-1 text-xs text-red-500">{errors.zoneId}</p>}
           </div>
 
           {/* City, Postal, Country */}
@@ -273,6 +322,13 @@ export default function AddCustomer() {
           </div>
         </form>
       </div>
+
+      <AddZoneModal
+        isOpen={isZoneModalOpen}
+        onClose={() => setIsZoneModalOpen(false)}
+        onSuccess={handleZoneCreated}
+        refetchZones={refetchZones}
+      />
     </DefaultLayout>
   );
 }

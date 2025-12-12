@@ -6,36 +6,39 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
 import { useUsers } from "@/lib/api/servicesHooks";
 import { useUserStore } from "@/lib/store/useUserStore";
+import CreateUserModal from "@/components/modals/CreateUserModal";
 
 export type UserRole = "company_user" | "company_admin";
 
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: UserRole;
-  createdAt: string;
-  // optional fields
-  password?: string;
-  address?: string | null;
-  logo?: string | null;
-  otp?: string | null;
-  tenantId?: string;
-  lastActivity?: string;
-  updatedAt?: string;
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: UserRole;
+    createdAt: string;
+    // optional fields
+    password?: string;
+    address?: string | null;
+    logo?: string | null;
+    otp?: string | null;
+    tenantId?: string;
+    lastActivity?: string;
+    updatedAt?: string;
 }
 
 export interface CreateUserResponse {
-  message: string;
-  user: User;
+    message: string;
+    user: User;
 }
 
 export interface GetUsersResponse {
-  users: User[];
+    users: User[];
 }
 
 export default function UserManagement() {
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
     const { data, isLoading, isError } = useUsers();
     console.log("GET USERS API RESPONSE:", data);
 
@@ -70,7 +73,7 @@ export default function UserManagement() {
     const totalUsers = users.length;
 
     const stats = [
-        { label: "Total Users", value: totalUsers.toString(),color:'text-gray-900 dark:text-white' },
+        { label: "Total Users", value: totalUsers.toString(), color: 'text-gray-900 dark:text-white' },
     ];
 
     const tabs = [
@@ -102,12 +105,14 @@ export default function UserManagement() {
                 {/* Header */}
                 <div className="border-b border-gray-200 bg-white px-3 py-4 dark:border-gray-700 dark:bg-gray-800 sm:px-6 sm:py-8">
                     <div className="flex justify-end">
-                        <Link href="/users/add" className="sm:ml-auto">
-                            <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto">
-                                <Plus size={20} />
-                                Add User
-                            </button>
-                        </Link>
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white hover:bg-blue-700 sm:w-auto"
+                        >
+                            <Plus size={20} />
+                            Add User
+                        </button>
+
                     </div>
                 </div>
 
@@ -219,9 +224,9 @@ export default function UserManagement() {
                                                     <td className="px-3 py-3 sm:px-6 sm:py-4">
                                                         <div className="flex items-center justify-center gap-1 sm:gap-2">
                                                             {/* <Link href={`/user/${user.id}`}> */}
-                                                                <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300">
-                                                                    <Edit size={16} className="sm:size-[18px]" />
-                                                                </button>
+                                                            <button className="p-1 text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300">
+                                                                <Edit size={16} className="sm:size-[18px]" />
+                                                            </button>
                                                             {/* </Link> */}
                                                             <button
                                                                 onClick={(e) => {
@@ -286,6 +291,15 @@ export default function UserManagement() {
                     )}
                 </div>
             </div>
+            <CreateUserModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={() => {
+                    // refresh users or re-fetch
+                }}
+            />
+
         </DefaultLayout>
+
     );
 }

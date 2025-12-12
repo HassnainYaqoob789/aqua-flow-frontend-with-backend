@@ -78,7 +78,6 @@ export default function ProductFormPage() {
 
         if (type === "checkbox") {
             if (name === "isReusable") {
-                // When isReusable is checked, set requiresEmptyReturn to true by default
                 setFormData((prev) => ({
                     ...prev,
                     [name]: checked,
@@ -121,14 +120,12 @@ export default function ProductFormPage() {
     };
 
     const onSuccess = () => {
-        // router.push("/products/all-products");
+        router.push("/products/all-products");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validateForm()) return;
-
-        // Create FormData for multipart/form-data
         const formDataToSend = new FormData();
         formDataToSend.append("name", formData.name);
         formDataToSend.append("size", formData.size);
@@ -141,7 +138,6 @@ export default function ProductFormPage() {
             formDataToSend.append("image", imageFile);
         }
 
-        // Add reusable bottle fields
         formDataToSend.append("isReusable", formData.isReusable.toString());
         if (formData.isReusable) {
             formDataToSend.append("depositAmount", formData.depositAmount);

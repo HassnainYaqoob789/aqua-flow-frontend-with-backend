@@ -7,17 +7,16 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 import {
-  useBulkAssignDriver, // New hook
+  useBulkAssignDriver, 
   useCustomerByZone,
   useZone,
-  useDriver, // Keep for driver fetching
+  useDriver, 
 } from "@/lib/api/servicesHooks";
 
 import { useEffect, useState } from "react";
 import { useDriverStore } from "@/lib/store/useDriver";
 import { useZoneStore } from "@/lib/store/useZoneStore";
 
-// Updated types to match the API response (add to your types/auth.ts or create a new interface)
 export interface CustomersByZoneResponse {
   success: boolean;
   zone: string;
@@ -63,7 +62,6 @@ export default function DeliveryOperations() {
   const [selectedDriver, setSelectedDriver] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
-  // Fetch customers by selected zone (response matches provided JSON)
   const {
     data: customersResponse,
     isLoading: customersLoading,
@@ -113,7 +111,6 @@ export default function DeliveryOperations() {
       scheduledDate: selectedDate,
       customerIds,
     };
-    console.log('Payload to send:', payload);
 
     bulkAssignMutation(payload, {
       onSuccess: (data) => {
@@ -177,23 +174,11 @@ export default function DeliveryOperations() {
             );
           })}
         </div>
-
-        {/* Zone Info (from response) */}
-        {customersResponse && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-medium text-blue-800">Zone: {customersResponse.zone}</p>
-              <p className="text-sm text-gray-600">As of: {customersResponse.asOf}</p>
-            </div>
-          </div>
-        )}
-
         {/* Filters */}
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
           <div className="border-b bg-gray-50 px-6 py-4">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
 
-              {/* Zone Select (triggers param fetch) */}
               <div className="w-full sm:w-auto">
                 <label className="block text-sm font-medium mb-2 text-gray-700">
                   <MapPin className="inline h-4 w-4 mr-2" /> Zone
@@ -218,8 +203,6 @@ export default function DeliveryOperations() {
                   </select>
                 )}
               </div>
-
-              {/* Driver + Date */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <select
                   value={selectedDriver}
@@ -243,8 +226,6 @@ export default function DeliveryOperations() {
               </div>
             </div>
           </div>
-
-          {/* Customers Cards (minimal data, improved layout) */}
           <div className="p-6 space-y-4">
             {customersLoading ? (
               <div className="text-center py-12">

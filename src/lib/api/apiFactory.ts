@@ -23,7 +23,10 @@ import {
   CustomersByZoneResponse,
   User,
   GetUsersResponse,
+  GetUsersStatsResponse,
   CreateUserResponse,
+  ReportsState,
+  PaginationParams,
 } from "@/lib/types/auth";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "./services/apiMethods";
 import {
@@ -50,10 +53,12 @@ import {
   DRIVER_PUT_URL,
   USERS_CREATE_URL,
   USERS_GET_URL,
+  USERS_GET_STATS,
   PRODUCTS_PUT_URL,
   PRODUCTS_PATCH_URL,
   DRIVER_PATCH_URL,
   ZONE_PATCH_URL,
+  REPORTS_GET_URL,
 } from "./services/endpoints";
 import apiClient from "./services/apiClient";
 import { useDriverStore } from "../store/useDriver";
@@ -218,6 +223,16 @@ export const createOrder = async (
 export const getOrders = async (): Promise<GetOrdersResponse> => {
   return await apiGet<GetOrdersResponse>(ORDER_GET_URL);
 };
+
+export const getOrdersPaginated = async (params: PaginationParams = {}): Promise<GetOrdersResponse> => {
+  const { page = 1, limit = 1 } = params;
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  }).toString();
+  return await apiGet<GetOrdersResponse>(`${ORDER_GET_URL}?${queryString}`);
+};
+
 // ==================================ORDER APIS END============================
 
 // ==================================INVENTORY APIS============================
@@ -245,4 +260,16 @@ export const getUsers = async (): Promise<GetUsersResponse> => {
 
 
 
+export const getUsersStats = async (): Promise<GetUsersStatsResponse> => {
+  return await apiGet<GetUsersStatsResponse>(USERS_GET_STATS);
+};
+
 // =======================================USERS APIS END==================================
+
+
+
+
+
+export const getReports = async (): Promise<ReportsState> => {
+  return await apiGet<ReportsState>(REPORTS_GET_URL);
+};

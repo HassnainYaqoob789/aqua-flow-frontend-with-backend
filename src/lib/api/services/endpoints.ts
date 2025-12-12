@@ -1,7 +1,7 @@
 // src/lib/config.ts
 
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001/api";
-// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.18.107:8001";
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.50.227:8001/api";
+// export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.50.227:8001";
 
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend/api";
 export const IMG_URL = process.env.NEXT_PUBLIC_API_URL || "https://aquaflow.alisonstech-dev.com/backend";
@@ -13,6 +13,8 @@ export const CUSTOMER_CREATE_URL = `${BASE_URL}/admin/customers/create`;
 export const CUSTOMER_GET_URL = `${BASE_URL}/admin/customers/all`;
 export const CUSTOMER_PUT_URL = `${BASE_URL}/admin/customers/update`;
 export const CUSTOMER_PATCH_URL = `${BASE_URL}/admin/customers/status`;
+
+
 // ====================CUSTOMER APIS=========================
 
 // ==========================ZONE API ======================
@@ -45,6 +47,10 @@ export const DRIVER_PUT_URL = `${BASE_URL}/admin/drivers/update`;
 export const DRIVER_PATCH_URL = `${BASE_URL}/admin/drivers/status`;
 
 
+
+
+
+
 export const DRIVER_PATCH_ASSIGN_URL = `${BASE_URL}/delivery-operations/assign-driver`;
 export const BULK_ASSIGN_DRIVER_URL = `${BASE_URL}/delivery-operations/assign-driver`;
 // ==========================DRIVER API ======================
@@ -62,6 +68,8 @@ export const INVENTORY_CREATE_URL = `${BASE_URL}/inventory/add-stock`;
 export const USERS_CREATE_URL = `${BASE_URL}/users/create`;
 export const USERS_GET_URL = `${BASE_URL}/users/all`;
 
+export const USERS_GET_STATS = `${BASE_URL}/users/getUsersStats`;
+
 
 
 // =============================== USERS API END =============================
@@ -73,3 +81,9 @@ export const USERS_GET_URL = `${BASE_URL}/users/all`;
 
 
 
+// =============================== REPORTS API =============================
+export const REPORTS_GET_URL = `${BASE_URL}/app/driver/payment/reports`;
+
+
+
+// =============================== REPORTS API END =============================

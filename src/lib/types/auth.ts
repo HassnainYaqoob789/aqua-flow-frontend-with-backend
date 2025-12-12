@@ -299,12 +299,23 @@ export interface Order {
 
 export interface OrderStats {
   totalOrders: number;
+  lastWeekOrders: number;
+  newOrderPercentage: number;
+
   pending: number;
   in_progress: number;
   delivered: number;
+  completed: number;
   cancelled: number;
-  completed?: number; // optional
+  failed: number;
 
+  recurring: number;
+  oneTime: number;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
 }
 
 export interface PaginationInfo {
@@ -316,7 +327,6 @@ export interface PaginationInfo {
 
 export interface GetOrdersResponse {
   orders: Order[];
-  stats: OrderStats;
   pagination: PaginationInfo;
 }
 export interface GlobalReusablePool {
@@ -407,4 +417,14 @@ export interface CreateUserResponse {
 
 export interface GetUsersResponse {
   users: User[];
+}
+
+export interface GetUsersStatsResponse {
+  totalCount: number;
+  recentUsersCount: number;
+  recentUsersPercentage: number;
+}
+
+export interface ReportsState {
+  reports: any | null;
 }
