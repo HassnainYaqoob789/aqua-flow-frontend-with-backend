@@ -264,46 +264,117 @@ export default function OrderManagement() {
       </div>
 
       {/* Mobile Cards */}
+      {/* Mobile Cards */}
       <div className="space-y-4 lg:hidden">
-        {orders.map((order: any) => {
-          const hasDriver = !!order.driverId;
-          const driverName = order.driver?.name || "";
+        {orders.length > 0 ? (
+          orders.map((order: any) => {
+            const hasDriver = !!order.driverId;
+            const driverName = order.driver?.name || "";
 
-          return (
-            <div
-              key={order.id}
-              className="rounded-lg border border-stroke bg-white p-5 shadow-default dark:border-strokedark dark:bg-boxdark"
-            >
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="font-bold">{order.orderNumberDisplay}</h3>
-                  <p className="text-sm text-gray-600">{order.customer?.name}</p>
+            return (
+              <div
+                key={order.id}
+                className="rounded-lg border border-stroke bg-white p-5 shadow-default dark:border-strokedark dark:bg-boxdark"
+              >
+                {/* Header: Order ID + Customer */}
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="inline-block rounded-md bg-gray-800 px-3 py-1 text-sm font-bold text-white">
+                      {order.orderNumberDisplay}
+                    </span>
+                    <Link href={`/customer/${order.customer?.id}?mode=view`}>
+                      <p className="mt-2 font-semibold text-gray-900 dark:text-white">
+                        {order.customer?.name || "—"}
+                      </p>
+                      <p className="text-sm text-gray-500">{order.deliveryAddress}</p>
+                    </Link>
+                  </div>
+                  <MoreVertical className="h-5 w-5 text-gray-400" />
                 </div>
-                <button>
-                  <MoreVertical size={20} />
-                </button>
+
+                {/* Details Grid */}
+                <div className="space-y-3 text-sm">
+                  {/* Zone */}
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Zone</span>
+                    <span className="rounded-md bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                      {order.zone?.name || "—"}
+                    </span>
+                  </div>
+
+                  {/* Items */}
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Items</span>
+                    <span className="font-medium">{formatItems(order.items)}</span>
+                  </div>
+
+                  {/* Delivery Date & Status */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Delivery</span>
+                    <div className="text-right">
+                      <div className="font-medium">{formatDeliveryDate(order.deliveryDate)}</div>
+                      <span
+                        className={`inline-block mt-1 rounded-md px-2 py-0.5 text-xs font-medium ${getDeliveryStatus(
+                          order.deliveryDate
+                        )}`}
+                      >
+                        {getDeliveryStatusText(order.deliveryDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Driver */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Driver</span>
+                    {!hasDriver ? (
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-gray-700/40 rounded-sm">
+                        No Driver Assigned
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 dark:text-green-200 dark:bg-green-800/40 rounded-sm">
+                        <Truck className="h-3.5 w-3.5" />
+                        {driverName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Amount */}
+                  <div className="flex justify-between font-semibold text-base">
+                    <span>Amount</span>
+                    <span>Rs. {order.totalAmount?.toLocaleString()}</span>
+                  </div>
+
+                  {/* Payment & Order Status Row */}
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-strokedark">
+                    <div className="flex items-center gap-1">
+                      <Wallet className="h-4 w-4 text-blue-600" />
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${paymentStatusClasses[order.paymentStatus] ||
+                          "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          }`}
+                      >
+                        {order.paymentStatus}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(order.status) ??
+                        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Items</span>
-                  <span>{formatItems(order.items)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Delivery</span>
-                  <span>{formatDeliveryDate(order.deliveryDate)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Driver</span>
-                  <span>{hasDriver ? driverName : "Not assigned"}</span>
-                </div>
-                <div className="flex justify-between font-semibold">
-                  <span>Amount</span>
-                  <span>Rs. {order.totalAmount}</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="p-8 text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-4 text-gray-500">No orders found</p>
+          </div>
+        )}
       </div>
 
       {/* Pagination Controls — Now Clean & Reusable */}
