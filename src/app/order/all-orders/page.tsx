@@ -240,12 +240,12 @@ export default function OrderManagement() {
                       </td>
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${paymentStatusClasses[order.paymentStatus] ??
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(order.status) ??
                             "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                             }`}
                         >
                           <Wallet className="h-3 w-3" />
-                          {order.paymentStatus}
+                          {order.status}
                         </span>
                       </td>
 

@@ -12,8 +12,8 @@ export const formatItems = (items: any[]) =>
   !items?.length
     ? "—"
     : items
-        .map((i) => `${i.product?.name || "Item"} (x${i.quantity || 1})`)
-        .join(", ");
+      .map((i) => `${i.product?.name || "Item"} (x${i.quantity || 1})`)
+      .join(", ");
 
 /**
  * renderItems()
@@ -41,22 +41,22 @@ export const renderItems = (items: any[]) =>
 
 
 
-  /**
- * getDeliveryStatus()
- * ------------------------------------------
- * Returns Tailwind CSS color classes based on how close
- * the delivery date is compared to today.
- *
- * Logic:
- * - Past date  → Red
- * - Today      → Yellow
- * - Within 2 days → Orange
- * - Future beyond 2 days → Green
- *
- * Purpose:
- * Used for badge/tag background + text colors in both table
- * and mobile views to visually communicate urgency.
- */
+/**
+* getDeliveryStatus()
+* ------------------------------------------
+* Returns Tailwind CSS color classes based on how close
+* the delivery date is compared to today.
+*
+* Logic:
+* - Past date  → Red
+* - Today      → Yellow
+* - Within 2 days → Orange
+* - Future beyond 2 days → Green
+*
+* Purpose:
+* Used for badge/tag background + text colors in both table
+* and mobile views to visually communicate urgency.
+*/
 export const getDeliveryStatus = (deliveryDate: string) => {
   const today = new Date();
   const date = new Date(deliveryDate);
@@ -102,18 +102,29 @@ export const getDeliveryStatus = (deliveryDate: string) => {
  */
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case "pending":
-      return "bg-gray-900 text-white";
     case "in_progress":
       return "bg-blue-50 text-blue-700 border border-blue-200";
+
+    case "out_for_delivery":
+      return "bg-indigo-50 text-indigo-700 border border-indigo-200";
+
     case "delivered":
       return "bg-green-50 text-green-700 border border-green-200";
+
+    case "completed":
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+
+    case "pending":
+      return "bg-gray-100 text-gray-700 border border-gray-200";
+
     case "cancelled":
-      return "bg-red-500 text-white";
+      return "bg-red-50 text-red-700 border border-red-200";
+
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-gray-100 text-gray-700 border border-gray-200";
   }
 };
+
 
 
 
