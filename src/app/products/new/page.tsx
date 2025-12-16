@@ -90,10 +90,17 @@ export default function ProductFormPage() {
                     [name]: checked,
                 }));
             }
+        } else if (name === "price") {
+            // Handle price specifically: convert to number, default to 0 if empty
+            const numValue = value === "" ? 0 : parseFloat(value);
+            setFormData((prev) => ({
+                ...prev,
+                price: isNaN(numValue) ? 0 : numValue,
+            }));
         } else {
             setFormData((prev) => ({
                 ...prev,
-                [name]: name === "price" ? parseFloat(value) || 0 : value,
+                [name]: value,
             }));
         }
 
@@ -108,13 +115,6 @@ export default function ProductFormPage() {
         if (!formData.size.trim()) newErrors.size = "Size is required";
         if (formData.price <= 0) newErrors.price = "Price must be greater than 0";
 
-        // Validate reusable bottle fields
-        // if (formData.isReusable) {
-        //     if (!formData.depositAmount || parseFloat(formData.depositAmount) <= 0) {
-        //         newErrors.depositAmount = "Deposit amount is required for reusable bottles";
-        //     }
-        // }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -126,6 +126,7 @@ export default function ProductFormPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validateForm()) return;
+
         const formDataToSend = new FormData();
         formDataToSend.append("name", formData.name);
         formDataToSend.append("size", formData.size);
@@ -160,6 +161,9 @@ export default function ProductFormPage() {
     };
 
     const isPending = createProductsMutation.isPending || isCompressing;
+
+    // Display value for price input: show nothing if 0, otherwise show the number
+    const displayPriceValue = formData.price === 0 ? "" : formData.price;
 
     return (
         <DefaultLayout>
@@ -214,7 +218,7 @@ export default function ProductFormPage() {
                             <input
                                 type="number"
                                 name="price"
-                                value={formData.price}
+                                value={displayPriceValue}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
                                 step="0.01"
@@ -227,6 +231,7 @@ export default function ProductFormPage() {
                             )}
                         </div>
                     </div>
+                    {/* Rest of the form remains unchanged */}
                     <div>
                         <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                             Description
@@ -276,7 +281,6 @@ export default function ProductFormPage() {
                             </div>
                         )}
                     </div>
-
 
                     <div>
                         <label className="mb-2 block text-sm font-medium text-black dark:text-white">

@@ -1,6 +1,6 @@
 // useProductStore.ts
 import { createStoreFactory } from "./storeFactory";
-import { Product, ProductResponse } from "@/lib/types/auth";
+import { Product, ProductResponse } from "@/lib/types/typeInterfaces";
 
 interface ProductState {
   products: Product[];

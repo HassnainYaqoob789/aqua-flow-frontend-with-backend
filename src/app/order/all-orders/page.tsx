@@ -13,6 +13,7 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
@@ -28,7 +29,7 @@ import { formatItems, renderItems, getDeliveryStatus, getStatusColor, getDeliver
 export default function OrderManagement() {
   const [page, setPage] = useState(1);
   // Fetch orders — limit will be controlled by usePagination
-  const { data: apiResponse, isLoading, isError } = useOrdersQuery({
+  const { data: apiResponse, isLoading, isError, refetch, } = useOrdersQuery({
     page,
     limit: 10,
   });
@@ -68,9 +69,27 @@ export default function OrderManagement() {
     );
   }
 
-  const orders = apiResponse.orders || [];
-  const stats = apiResponse.stats || {};
+  type OrderStats = {
+    totalOrders?: number;
+    pending?: number;
+    in_progress?: number;
+    delivered?: number;
+    completed?: number;
+  };
 
+  const orders = apiResponse.orders || [];
+  const stats: OrderStats = apiResponse.stats ?? {};
+
+  const paymentStatusClasses: Record<string, string> = {
+    PAID: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    PENDING:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    PARTIAL:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    OVERDUE: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    CANCELLED:
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  };
 
 
 
@@ -109,6 +128,19 @@ export default function OrderManagement() {
           </p>
         </div>
       </div>
+      <div className="mb-6 flex justify-end">
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+          />
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
 
       {/* Desktop Table */}
       <div className="hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark lg:block">
@@ -124,8 +156,8 @@ export default function OrderManagement() {
                   <th className="px-6 py-4 font-medium min-w-40">Delivery Date</th>
                   <th className="px-4 py-4 font-medium">Driver</th>
                   <th className="px-4 py-4 font-medium">Amount</th>
-                  <th className="px-4 py-4 font-medium">Payment</th>
-                  <th className="px-4 py-4 font-medium">Status</th>
+                  <th className="px-4 py-4 font-medium">Payment Status</th>
+                  <th className="px-4 py-4 font-medium">Order Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,17 +231,24 @@ export default function OrderManagement() {
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         Rs. {order.totalAmount?.toLocaleString()}
                       </td>
+
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                           <Wallet className="h-3 w-3" />
-                          {formatPayment(order.paymentMethod)}
+                          {order.paymentStatus}
                         </span>
                       </td>
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
-                          {order.status.replace(/_/g, " ")}
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${paymentStatusClasses[order.paymentStatus] ??
+                            "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                            }`}
+                        >
+                          <Wallet className="h-3 w-3" />
+                          {order.paymentStatus}
                         </span>
                       </td>
+
                     </tr>
                   );
                 })}

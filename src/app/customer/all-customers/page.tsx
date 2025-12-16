@@ -10,16 +10,17 @@ import {
   Send,
   Download,
   Users,
+  RefreshCw,
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
 import { useCustomers, useStatusCustomer } from "@/lib/api/servicesHooks";
-import { Customer } from "@/lib/types/auth";
+import { Customer } from "@/lib/types/typeInterfaces";
 import { DataTable } from "@/components/Tables/DataTable";
 
 export default function CustomerManagement() {
-  const { data: dataaa, isLoading, isError } = useCustomers();
+  const { data: dataaa, isLoading, isError, refetch } = useCustomers();
   const { mutate: updateStatus, isPending } = useStatusCustomer();
 
   const customers = dataaa?.customers || [];
@@ -196,6 +197,19 @@ export default function CustomerManagement() {
               </div>
             </div>
           )}
+          <div className="mb-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+              {isLoading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
 
           {!isLoading && !isError && (
             <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">

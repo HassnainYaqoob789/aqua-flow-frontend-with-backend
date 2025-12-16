@@ -9,11 +9,11 @@ import { addProducts, setProducts, status_Product, update_Products } from "../st
 
 import { setAuth } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { AssignDriverPayload, BulkAssignPayload, CreateOrderPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, GetOrdersResponse, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/auth";
+import { AssignDriverPayload, BulkAssignPayload, CreateOrderPayload, Customer, CustomerListResponse, CustomersByZoneResponse, Driver, GetOrdersResponse, Order, Product, StatusPayload, StatusPayloadDriver, ToastContextType, Zone } from "../types/typeInterfaces";
 import { addDriver, setDrivers, status_Driver, status_update_Driver, update_Driver, useDriverStore } from "../store/useDriver";
 import {
   // addOrder,
-  setOrders, updateOrder
+  // setOrders, updateOrder
 } from "../store/useOrder";
 import { setInventory, updateInventory } from "../store/inventoryStore";
 import { useToastStore } from '../store/toastStore';
@@ -209,11 +209,11 @@ export const useCreateOrder = createMutationFactory<Order, Partial<CreateOrderPa
 
 
 
-export const useOrderStore = createQueryFactory("orders", async () => {
-  const data = await getOrders();
-  setOrders(data.orders);
-  return data;
-});
+// export const useOrderStore = createQueryFactory("orders", async () => {
+//   const data = await getOrders();
+//   setOrders(data.orders);
+//   return data;
+// });
 
 export const useOrdersQuery = createQueryFactoryWithParams<
   GetOrdersResponse,
@@ -226,21 +226,21 @@ export const useOrderStatsStore = createQueryFactory("ordersStats", async () => 
 
 
 
-export const useAssignDriver = (options?: {
-  onSuccess?: (data: Order) => void;
-  onError?: (error: any) => void;
-}) => {
-  const mutation = createMutationFactory<Order, AssignDriverPayload>(
-    "orders/assign-driver",
-    assignDriver,
-    (data) => {
-      updateOrder(data);
-      options?.onSuccess?.(data);
-    }
-  );
+// export const useAssignDriver = (options?: {
+//   onSuccess?: (data: Order) => void;
+//   onError?: (error: any) => void;
+// }) => {
+//   const mutation = createMutationFactory<Order, AssignDriverPayload>(
+//     "orders/assign-driver",
+//     assignDriver,
+//     (data) => {
+//       updateOrder(data);
+//       options?.onSuccess?.(data);
+//     }
+//   );
 
-  return mutation;
-};
+//   return mutation;
+// };
 
 
 

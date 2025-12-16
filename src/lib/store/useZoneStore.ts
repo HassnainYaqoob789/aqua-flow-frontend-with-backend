@@ -1,5 +1,5 @@
 import { createStoreFactory } from "./storeFactory";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 
 interface ZoneState {
   zone: Zone[];

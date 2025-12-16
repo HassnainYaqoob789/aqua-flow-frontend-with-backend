@@ -1,7 +1,7 @@
 
 import { createStoreFactory } from "./storeFactory";
 import Cookies from "js-cookie";
-import { LoginResponse } from "@/lib/types/auth";
+import { LoginResponse } from "@/lib/types/typeInterfaces";
 
 interface AuthState {
   user: LoginResponse["user"] | null;

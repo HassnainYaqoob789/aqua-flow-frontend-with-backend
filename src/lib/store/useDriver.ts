@@ -1,6 +1,6 @@
 // useDriverStore.ts
 import { createStoreFactory } from "./storeFactory";
-import { Customer, Driver } from "@/lib/types/auth";
+import { Customer, Driver } from "@/lib/types/typeInterfaces";
 import { useCustomerStore } from "./useCustomerZoneStore";
 
 interface DriverState {

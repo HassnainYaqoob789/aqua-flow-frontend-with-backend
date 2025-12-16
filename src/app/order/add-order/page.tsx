@@ -31,7 +31,7 @@ import { useProductStore } from "@/lib/store/useProduct";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { useDriverStore } from "@/lib/store/useDriver";
 import { useCreateOrder } from "@/lib/api/servicesHooks";
-import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/auth";
+import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/typeInterfaces";
 import { useToastStore } from "@/lib/store/toastStore";
 import AddCustomerModal from "@/components/modals/AddCustomerModal";
 import SearchableSelect from "@/components/inputs/SearchableSelect";
@@ -315,7 +315,7 @@ export default function AddOrder() {
 
       setErrors({});
       useToastStore.getState().addToast("Order created successfully!", "success");
-      // router.push("/order/all-orders");
+      router.push("/order/all-orders");
 
     } catch (err: any) {
       console.error("Order creation failed:", err);

@@ -5,7 +5,7 @@ import { ArrowLeft, Save, User } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
-import type { UserRole } from "@/lib/types/auth";
+import type { UserRole } from "@/lib/types/typeInterfaces";
 import { useCreateUser } from "@/lib/api/servicesHooks";
 
 interface UserFormData {

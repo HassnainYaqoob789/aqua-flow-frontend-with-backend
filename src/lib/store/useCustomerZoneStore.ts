@@ -1,6 +1,6 @@
 // useCustomerStore.ts
 import { createStoreFactory } from "./storeFactory";
-import { Customer } from "@/lib/types/auth";
+import { Customer } from "@/lib/types/typeInterfaces";
 
 interface CustomerZoneState {
   customers: Customer[];

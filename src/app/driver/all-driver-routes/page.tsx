@@ -15,6 +15,7 @@ import {
   Eye,
   Loader2,
   Edit,
+  RefreshCw,
 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
@@ -66,7 +67,7 @@ interface DriverResponse {
 
 export default function DriverRouteManagement() {
 
-  const { data, isLoading, isError } = useDriver();
+  const { data, isLoading, isError, refetch } = useDriver();
   const { mutate: updateStatus, isPending } = useStatusUpdateDriver();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -231,7 +232,7 @@ export default function DriverRouteManagement() {
             Deliveries Today
           </p>
           <p className="text-2xl font-bold text-blue-600 sm:text-3xl">
-            {stats.deliveriesToday}
+            {stats.deliveriesToday || 0}
           </p>
           <div className="absolute right-3 top-3 text-blue-400">
             <Truck size={16} />
@@ -242,13 +243,27 @@ export default function DriverRouteManagement() {
             Total Deliveries
           </p>
           <p className="text-2xl font-bold text-purple-600 sm:text-3xl">
-            {stats.totalDeliveriesEver}
+            {stats.totalDeliveriesEver || 0}
           </p>
           <div className="absolute right-3 top-3 text-purple-400">
             <Truck size={16} />
           </div>
         </div>
       </div>
+      <div className="mb-6 flex justify-end">
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+          />
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
+
       <div className="hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark lg:block">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
@@ -268,7 +283,7 @@ export default function DriverRouteManagement() {
                 </th>
 
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Mode
+                  Status
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Actions
@@ -299,9 +314,9 @@ export default function DriverRouteManagement() {
                           <h5 className="font-medium text-black dark:text-white">
                             {driver.name}
                           </h5>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {/* <p className="text-sm text-gray-500 dark:text-gray-400">
                             {driver.id.slice(0, 8)}...
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                     </td>
@@ -442,9 +457,9 @@ export default function DriverRouteManagement() {
                     <h3 className="text-sm font-semibold text-black dark:text-white">
                       {driver.name}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {/* <p className="text-xs text-gray-500 dark:text-gray-400">
                       {driver.id.slice(0, 8)}...
-                    </p>
+                    </p> */}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -581,7 +596,7 @@ export default function DriverRouteManagement() {
                 </div>
                 <div className="flex items-center justify-between pt-2 text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    Mode:
+                    Status:
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(

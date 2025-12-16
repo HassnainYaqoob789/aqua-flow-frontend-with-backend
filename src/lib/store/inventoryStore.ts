@@ -1,5 +1,5 @@
 import { createStoreFactory } from "./storeFactory";
-import { InventoryResponse } from "@/lib/types/auth";
+import { InventoryResponse } from "@/lib/types/typeInterfaces";
 
 interface InventoryState {
   inventory: InventoryResponse | null;

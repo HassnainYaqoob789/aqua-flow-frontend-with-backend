@@ -66,6 +66,7 @@ export default function DeliveryOperations() {
     data: customersResponse,
     isLoading: customersLoading,
     isError: customersError,
+    refetch: refetchCustomers,
   } = useCustomerByZone(selectedZoneId);
 
   const [customers, setCustomers] = useState<EligibleCustomer[]>([]);
@@ -113,10 +114,9 @@ export default function DeliveryOperations() {
     };
 
     bulkAssignMutation(payload, {
-      onSuccess: (data) => {
-        if (data.success && data.message) {
-          alert(data.message); 
-        }
+      onSuccess: () => {
+        // Refresh the customers list to reflect the new assignment state
+        refetchCustomers();
       },
       onError: (error) => {
         console.error('Mutation error:', error);
@@ -160,7 +160,7 @@ export default function DeliveryOperations() {
 
       <div className="px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -173,7 +173,7 @@ export default function DeliveryOperations() {
               </div>
             );
           })}
-        </div>
+        </div> */}
         {/* Filters */}
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
           <div className="border-b bg-gray-50 px-6 py-4">

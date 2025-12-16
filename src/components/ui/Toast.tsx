@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
-import { Toast as ToastType } from '@/lib/types/auth';
+import { Toast as ToastType } from '@/lib/types/typeInterfaces';
 
 interface ToastProps {
   toast: ToastType;

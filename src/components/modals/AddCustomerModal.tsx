@@ -3,7 +3,7 @@ import React, { useState, FormEvent, useEffect } from "react";
 import { X, User, Mail, Phone, MapPin, Globe, Save, Building2, Plus, MapPinPlus } from "lucide-react";
 import { useCreateCustomer } from "@/lib/api/servicesHooks";
 import { useZone } from "@/lib/api/servicesHooks";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 import { useToastStore } from "@/lib/store/toastStore";
 import AddZoneModal from "./AddZoneModal";
 

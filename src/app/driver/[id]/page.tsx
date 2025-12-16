@@ -8,7 +8,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useZoneStore } from "@/lib/store/useZoneStore";
 import { useDriverStore } from "@/lib/store/useDriver";
 import { useZone, useCreateDriver, useUpdateDriver } from "@/lib/api/servicesHooks";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 import { useRouter } from "next/navigation";
 
 interface FormData {

@@ -325,8 +325,22 @@ export interface PaginationInfo {
   totalPages: number;
 }
 
+export interface OrderStats {
+  totalOrders: number;
+  pending: number;
+  in_progress: number;
+  delivered: number;
+  completed: number;
+  cancelled: number;
+  failed: number;
+  oneTime: number;
+  recurring: number;
+  // Add any additional stats fields here if they appear in the future
+}
+
 export interface GetOrdersResponse {
   orders: Order[];
+  stats?: OrderStats;      // Optional in case some endpoints omit it
   pagination: PaginationInfo;
 }
 export interface GlobalReusablePool {
@@ -344,6 +358,13 @@ export interface ProductInventory {
   totalSold: number;
   product: Product;
 }
+export interface CustomerWithEmptiesItem {
+  customerName: string;
+  totalEmpties: number;
+  note?: string;                     // e.g., "No upcoming delivery"
+  securityDeposit: number;
+}
+
 
 export interface InventoryResponse {
   totalBottles: number;
@@ -355,7 +376,9 @@ export interface InventoryResponse {
   lowStockMessage: string | null;
   bottleStockLevels: BottleStockLevel[];
   recentTransactions: RecentTransaction[];
-  emptiesTracking: EmptiesTracking[]; // Update type
+  // emptiesTracking: EmptiesTracking[]; // Update type
+  emptiesTracking: EmptiesTrackingItem[];           // Expected returns in next deliveries
+  customersWithEmpties: CustomerWithEmptiesItem[];  // Total empties (no upcoming order)
   productInventories: ProductInventory[]; // Add this
   globalReusablePool: GlobalReusablePool; // Add this
 }
@@ -372,12 +395,20 @@ export interface BottleStockLevel {
   available: number;
   isLow: boolean;
 }
+// export interface RecentTransaction {
+//   customerName: string;
+//   driverName: string;
+//   date: string;
+//   bottles: number;
+//   status: string;
+// }
 export interface RecentTransaction {
   customerName: string;
   driverName: string;
   date: string;
   bottles: number;
   status: string;
+  product: string;                   // e.g., "Mineral Water 19L"
 }
 
 export interface EmptiesTracking {

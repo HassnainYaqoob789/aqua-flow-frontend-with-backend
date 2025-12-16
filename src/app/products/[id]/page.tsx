@@ -9,7 +9,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useProducts, useUpdateProducts } from "@/lib/api/servicesHooks";
 import imageCompression from "browser-image-compression";
-import { Product } from "@/lib/types/auth";
+import { Product } from "@/lib/types/typeInterfaces";
 
 interface FormData {
     name: string;

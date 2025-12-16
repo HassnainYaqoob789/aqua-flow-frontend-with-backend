@@ -61,7 +61,7 @@ export default function DashboardPage() {
       },
       {
         title: "Revenue",
-        value: "$45,680",
+        value: "Rs 45,680",
         rate: "+4.2%",
         trend: "up",
         icon: TrendingUp,
@@ -188,6 +188,7 @@ export default function DashboardPage() {
             <ChartThree data={chartThreeData} colors={chartColors} />
           </div>
         </div>
+        
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Orders */}
@@ -266,7 +267,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Alert */}
-        <div className="mt-6 bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-400 dark:border-orange-600 p-4 rounded">
+        {/* <div className="mt-6 bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-400 dark:border-orange-600 p-4 rounded">
           <div className="flex items-start gap-3">
             <AlertCircle size={20} className="text-orange-600 dark:text-orange-400 mt-0.5" />
             <div>
@@ -282,7 +283,7 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

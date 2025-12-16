@@ -1,6 +1,6 @@
 // src/lib/store/useUserStore.ts
 import { createStoreFactory } from "./storeFactory";
-import type { User } from "@/lib/types/auth";
+import type { User } from "@/lib/types/typeInterfaces";
 
 interface UserState {
   users: User[];

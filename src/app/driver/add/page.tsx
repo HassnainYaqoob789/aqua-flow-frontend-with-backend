@@ -6,7 +6,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useZoneStore } from "@/lib/store/useZoneStore";
 import { useZone, useCreateDriver } from "@/lib/api/servicesHooks";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 import { useRouter } from "next/navigation";
 
 interface FormData {

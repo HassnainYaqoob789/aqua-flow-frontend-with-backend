@@ -27,7 +27,7 @@ import {
   CreateUserResponse,
   ReportsState,
   PaginationParams,
-} from "@/lib/types/auth";
+} from "@/lib/types/typeInterfaces";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "./services/apiMethods";
 import {
   CUSTOMER_CREATE_URL,

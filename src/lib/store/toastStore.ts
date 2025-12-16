@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Toast, ToastType } from '../types/auth';
+import { Toast, ToastType } from '../types/typeInterfaces';
 
 interface ToastStore {
   toasts: Toast[];

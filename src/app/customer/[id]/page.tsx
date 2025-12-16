@@ -21,7 +21,7 @@ import {
   useCustomers,
 } from "@/lib/api/servicesHooks";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
-import { Customer, Zone } from "@/lib/types/auth";
+import { Customer, Zone } from "@/lib/types/typeInterfaces";
 import { useZoneStore } from "@/lib/store/useZoneStore";
 
 interface ZoneFormData {

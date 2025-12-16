@@ -48,6 +48,16 @@ const menuGroups = [
     ],
   },
   {
+    name: "PRODUCTS",
+    menuItems: [
+      {
+        icon: <PackageSearch className="h-5 w-5" />,
+        label: "All Products",
+        route: "/products/all-products",
+      },
+    ],
+  },
+  {
     name: "PEOPLE & LOGISTICS",
     menuItems: [
       {
@@ -72,19 +82,16 @@ const menuGroups = [
       },
     ],
   },
-  {
-    name: "PRODUCTS",
-    menuItems: [
-      {
-        icon: <PackageSearch className="h-5 w-5" />,
-        label: "All Products",
-        route: "/products/all-products",
-      },
-    ],
-  },
+
   {
     name: "FINANCE & REPORTS",
     menuItems: [
+
+      {
+        icon: <FileText className="h-5 w-5" />,
+        label: "Billing & Reports",
+        route: "/reports",
+      },
       {
         icon: <Warehouse className="h-5 w-5" />,
         label: "Inventory",
@@ -107,11 +114,6 @@ const menuGroups = [
       //   route: "/billing-recoveries",
       // },
 
-      {
-        icon: <FileText className="h-5 w-5" />,
-        label: "Billing & Reports",
-        route: "/reports",
-      },
     ],
   },
   {

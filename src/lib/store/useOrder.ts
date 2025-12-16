@@ -34,7 +34,7 @@
 // With pagination, we rely on TanStack Query for the list data. Keep Zustand for mutations/single-order state if needed.
 // src/lib/store/useOrder.ts
 import { createStoreFactory } from "./storeFactory";
-import { Order } from "@/lib/types/auth"; // Adjust path
+import { Order } from "@/lib/types/typeInterfaces"; // Adjust path
 
 interface OrderState {
   // Remove 'orders' array since it's now managed by TanStack Query

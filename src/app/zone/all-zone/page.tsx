@@ -17,7 +17,7 @@ import {
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { useZone, useStatusZone } from "@/lib/api/servicesHooks";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 
 const ZoneManagement: React.FC = () => {
   const { data, isLoading, isError } = useZone();

@@ -1,5 +1,5 @@
 import { createStoreFactory } from "./storeFactory";
-import { ReportsState } from "@/lib/types/auth";
+import { ReportsState } from "@/lib/types/typeInterfaces";
 
 export const useReportsStore = createStoreFactory<ReportsState>({
   reports: null,

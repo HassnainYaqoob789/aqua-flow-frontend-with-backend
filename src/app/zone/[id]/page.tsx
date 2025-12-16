@@ -12,7 +12,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Link from "next/link";
 import { useCreateZone, useUpdateZone } from "@/lib/api/servicesHooks";
 import { useZoneStore } from "@/lib/store/useZoneStore";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 
 interface ZoneFormData {
   name: string;

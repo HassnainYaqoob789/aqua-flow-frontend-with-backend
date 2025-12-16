@@ -6,7 +6,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { useCreateCustomer, useCreateZone, useZone } from "@/lib/api/servicesHooks";
 import { useZoneStore } from "@/lib/store/useZoneStore";
-import { Zone } from "@/lib/types/auth";
+import { Zone } from "@/lib/types/typeInterfaces";
 import { useRouter } from "next/navigation";
 import AddZoneModal from "@/components/modals/AddZoneModal";
 

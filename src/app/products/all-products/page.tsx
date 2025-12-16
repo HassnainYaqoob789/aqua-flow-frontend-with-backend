@@ -8,7 +8,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { IMG_URL } from "@/lib/api/services/endpoints";
 import { useProducts } from "@/lib/api/servicesHooks";
 import { useStatusProduct } from "@/lib/api/servicesHooks"; // Assuming this is the path; adjust if needed
-import { ProductResponse, Product } from "@/lib/types/auth"; // Customer might not be needed; adjust imports
+import { ProductResponse, Product } from "@/lib/types/typeInterfaces"; // Customer might not be needed; adjust imports
 
 interface LocalProduct {
   id: string;

@@ -1,6 +1,6 @@
 
 import { useToastStore } from '../lib/store/toastStore';
-import { ToastContextType } from '../lib/types/auth';
+import { ToastContextType } from './types/typeInterfaces';
 
 export const useToast = (): ToastContextType => {
   const addToast = useToastStore(state => state.addToast);
