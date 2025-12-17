@@ -6,12 +6,14 @@ import { Droplet } from "lucide-react";
 import { useLogin } from "@/lib/api/servicesHooks";
 // import { useToast } from "@/lib/hooks/useToast";
 import { useToast } from "@/lib/hooks";
+import { Eye, EyeOff } from "lucide-react";
 
 
 const SignInForm = () => {
   const { mutate, isPending } = useLogin();
   const { showError } = useToast();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,7 +21,7 @@ const SignInForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!form.email || !form.password) {
       showError('Please fill in all fields');
@@ -61,15 +63,28 @@ const SignInForm = () => {
             </div>
 
             <div className="mb-8">
-              <label className="mb-2.5 block text-base font-medium text-white">Password</label>
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300 focus:border-blue-400 focus:outline-none transition-colors"
-              />
+              <label className="mb-2.5 block text-base font-medium text-white">
+                Password
+              </label>
+
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  className="w-full rounded-lg border border-white/30 bg-white/10 py-4 pl-6 pr-12 text-white placeholder-gray-300 focus:border-blue-400 focus:outline-none transition-colors"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             <button

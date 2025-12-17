@@ -911,3 +911,767 @@ export default function ReportsAnalytics() {
     </DefaultLayout>
   );
 }
+
+
+
+// "use client";
+// import React, { useState, useMemo } from "react";
+// import {
+//   Search,
+//   Filter,
+//   Download,
+//   FileText,
+//   Users,
+//   BarChart3,
+//   PieChart,
+//   TrendingUp,
+//   Calendar,
+//   Funnel,
+//   DollarSign,
+//   Package,
+//   Truck,
+//   CreditCard,
+//   Clock,
+//   CheckCircle,
+//   AlertCircle,
+//   AlertTriangle,
+//   MapPin,
+//   ShoppingCart,
+//   User,
+//   XCircle,
+//   IndianRupee,
+// } from "lucide-react";
+// import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
+// import DefaultLayout from "@/components/Layouts/DefaultLayout";
+// import dynamic from "next/dynamic";
+// import { useReportStore } from "@/lib/api/servicesHooks";
+
+// // Dynamic imports
+// const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), { ssr: false });
+// const ProductRevenueChart = dynamic(() => import("@/components/Tables/ProductRevenueChart"), { ssr: false });
+
+// // Updated Interfaces for new backend
+// interface PaymentItem {
+//   productName: string;
+//   quantity: number;
+//   totalAmount: number;
+// }
+
+// interface Customer {
+//   id: string;
+//   name: string;
+//   phone: string;
+//   zone?: { name: string };
+// }
+
+// interface CollectedByDriver {
+//   id: string;
+//   name: string;
+//   vehicleNumber: string;
+// }
+
+// interface Order {
+//   orderNumberDisplay: string;
+// }
+
+// interface Payment {
+//   id: string;
+//   paymentNumber: string;
+//   amount: number;
+//   paidAmount: number;
+//   pendingAmount: number;
+//   collectionType: string;
+//   dueDate: string;
+//   paymentDate: string;
+//   status: string;
+//   paymentMethod: string | null;
+//   settledByAdmin: boolean;
+//   customer?: Customer;
+//   collectedByDriver?: CollectedByDriver;
+//   order?: Order;
+//   paymentItems: PaymentItem[];
+// }
+
+// interface DriverSummary {
+//   driverId: string;
+//   driverName: string;
+//   vehicleNumber: string;
+//   collectedFromCustomers: number;
+//   settledToAdmin: number;
+//   pendingToAdmin: number;
+// }
+
+// interface Summary {
+//   totalPayments: number;
+//   totalBilledAmount: number;
+//   totalCollectedFromCustomers: number;
+//   totalSettledByAdmin: number;
+//   pendingFromDriversToAdmin: number;
+//   pendingFromCustomersToDrivers: number;
+//   byDriver: DriverSummary[];
+//   byType: any[];
+// }
+
+// interface ApiResponse {
+//   success: boolean;
+//   payments: Payment[];
+//   summary: Summary;
+//   message?: string;
+// }
+
+// export default function ReportsAnalytics() {
+//   const [dateRange, setDateRange] = useState("Last 30 Days");
+//   const [filter, setFilter] = useState("All");
+//   const { data, isLoading, isError } = useReportStore() as {
+//     data: ApiResponse | undefined;
+//     isLoading: boolean;
+//     isError: boolean;
+//   };
+
+//   const processedData = useMemo(() => {
+//     if (!data?.payments || !data?.summary) return null;
+
+//     // Product Sales & Revenue
+//     const productMap = new Map<string, { quantity: number; revenue: number }>();
+//     data.payments.forEach((payment) => {
+//       payment.paymentItems.forEach((item) => {
+//         const existing = productMap.get(item.productName) || { quantity: 0, revenue: 0 };
+//         productMap.set(item.productName, {
+//           quantity: existing.quantity + item.quantity,
+//           revenue: existing.revenue + item.totalAmount,
+//         });
+//       });
+//     });
+
+//     const productSalesData = Array.from(productMap.entries()).map(([name, d]) => ({
+//       name,
+//       value: d.quantity,
+//     }));
+
+//     const productRevenueData = Array.from(productMap.entries()).map(([name, d]) => ({
+//       product: name,
+//       revenue: d.revenue,
+//     }));
+
+//     // Driver Data
+//     const driverData = data.summary.byDriver || [];
+
+//     // Payment Status
+//     const statusData = data.summary.byType?.map((type: any) => ({
+//       status: type.status,
+//       type: type.collectionType,
+//       amount: type._sum.amount || 0,
+//       collected: type._sum.paidAmount || 0,
+//       pending: type._sum.pendingAmount || 0,
+//       count: type._count,
+//     })) || [];
+
+//     // Top Customers
+//     const customerMap = new Map<string, { name: string; phone: string; zone: string; totalSpent: number; orderCount: number }>();
+//     const zoneMap = new Map<string, { count: number; revenue: number }>();
+
+//     data.payments.forEach((payment) => {
+//       if (payment.customer) {
+//         const existing = customerMap.get(payment.customer.id) || {
+//           name: payment.customer.name,
+//           phone: payment.customer.phone,
+//           zone: payment.customer.zone?.name || "N/A",
+//           totalSpent: 0,
+//           orderCount: 0,
+//         };
+//         customerMap.set(payment.customer.id, {
+//           ...existing,
+//           totalSpent: existing.totalSpent + payment.amount,
+//           orderCount: existing.orderCount + 1,
+//         });
+
+//         const zoneName = payment.customer.zone?.name || "Unknown";
+//         const zoneExisting = zoneMap.get(zoneName) || { count: 0, revenue: 0 };
+//         zoneMap.set(zoneName, {
+//           count: zoneExisting.count + 1,
+//           revenue: zoneExisting.revenue + payment.amount,
+//         });
+//       }
+//     });
+
+//     const topCustomers = Array.from(customerMap.entries())
+//       .map(([id, customer]) => ({ id, ...customer }))
+//       .sort((a, b) => b.totalSpent - a.totalSpent)
+//       .slice(0, 5);
+
+//     const zoneData = Array.from(zoneMap.entries()).map(([zone, d]) => ({
+//       zone,
+//       count: d.count,
+//       revenue: d.revenue,
+//     }));
+
+//     // Payment Methods
+//     const paymentMethodMap = new Map<string, { count: number; amount: number }>();
+//     data.payments.forEach((payment) => {
+//       const method = payment.paymentMethod || "Cash on Delivery";
+//       const existing = paymentMethodMap.get(method) || { count: 0, amount: 0 };
+//       paymentMethodMap.set(method, {
+//         count: existing.count + 1,
+//         amount: existing.amount + payment.amount,
+//       });
+//     });
+
+//     const paymentMethods = Array.from(paymentMethodMap.entries()).map(([method, d]) => ({
+//       method,
+//       count: d.count,
+//       amount: d.amount,
+//     }));
+
+//     // Recent Transactions
+//     const recentTransactions = data.payments
+//       .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+//       .slice(0, 10);
+
+//     return {
+//       productSalesData,
+//       productRevenueData,
+//       driverData,
+//       statusData,
+//       topCustomers,
+//       zoneData,
+//       paymentMethods,
+//       recentTransactions,
+//       summary: data.summary,
+//       message: data.message,
+//     };
+//   }, [data]);
+
+//   const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
+
+//   const NoDataCard = ({ icon: Icon, title, message }: { icon: any; title: string; message: string }) => (
+//     <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center dark:border-gray-600 dark:bg-gray-800/50">
+//       <div className="mb-4 rounded-full bg-gray-200 p-4 dark:bg-gray-700">
+//         <Icon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+//       </div>
+//       <h4 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">{title}</h4>
+//       <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
+//     </div>
+//   );
+
+//   if (isLoading) {
+//     return (
+//       <DefaultLayout>
+//         <Breadcrumb pageName="Reports & Analytics" description="Generate insights and export data" />
+//         <div className="flex h-96 items-center justify-center">
+//           <div className="text-center">
+//             <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+//             <p className="text-gray-500">Loading reports data...</p>
+//           </div>
+//         </div>
+//       </DefaultLayout>
+//     );
+//   }
+
+//   if (isError || !processedData) {
+//     return (
+//       <DefaultLayout>
+//         <Breadcrumb pageName="Reports & Analytics" description="Generate insights and export data" />
+//         <div className="flex h-96 items-center justify-center">
+//           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-900/20">
+//             <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500" />
+//             <p className="text-lg font-semibold text-red-600">Error loading reports data</p>
+//             <p className="mt-2 text-sm text-red-500">Please try again later</p>
+//           </div>
+//         </div>
+//       </DefaultLayout>
+//     );
+//   }
+
+//   return (
+//     <DefaultLayout>
+//       <Breadcrumb pageName="Reports & Analytics" description="Comprehensive business insights and data analysis" />
+
+//       {/* Big Alert for Driver Settlement Pending */}
+//       <div className="mb-6">
+//         {processedData.summary.pendingFromDriversToAdmin > 0 ? (
+//           <div className="rounded-lg border-l-8 border-orange-500 bg-orange-50 p-8 dark:bg-orange-900/30">
+//             <div className="flex items-center gap-6">
+//               <AlertTriangle className="h-16 w-16 text-orange-600 dark:text-orange-400" />
+//               <div>
+//                 <h2 className="text-3xl font-bold text-orange-800 dark:text-orange-300">
+//                   Pending from Drivers to Admin
+//                 </h2>
+//                 <p className="mt-3 text-5xl font-bold text-orange-600 dark:text-orange-400">
+//                   ₹{processedData.summary.pendingFromDriversToAdmin.toLocaleString()}
+//                 </p>
+//                 <p className="mt-2 text-xl text-orange-700 dark:text-orange-300">
+//                   Drivers ne customers se collect kiya lekin admin ko abhi nahi diya
+//                 </p>
+//               </div>
+//             </div>
+//           </div>
+//         ) : (
+//           <div className="rounded-lg border-l-8 border-green-500 bg-green-50 p-8 dark:bg-green-900/30">
+//             <div className="flex items-center gap-6">
+//               <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400" />
+//               <div>
+//                 <h2 className="text-3xl font-bold text-green-800 dark:text-green-300">
+//                   All Driver Collections Settled!
+//                 </h2>
+//                 <p className="mt-3 text-5xl font-bold text-green-600 dark:text-green-400">
+//                   ₹{processedData.summary.totalCollectedFromCustomers.toLocaleString()}
+//                 </p>
+//                 <p className="mt-2 text-xl text-green-700 dark:text-green-300">
+//                   Aaj ka sab driver collection admin ne le liya hai 🎉
+//                 </p>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* 4 Main Stats Cards */}
+//       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+//         <div className="rounded-lg border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm font-medium text-gray-500">Billed Amount</p>
+//               <h4 className="mt-2 text-3xl font-bold text-black dark:text-white">
+//                 ₹{processedData.summary.totalBilledAmount.toLocaleString()}
+//               </h4>
+//             </div>
+//             <DollarSign className="h-10 w-10 text-gray-600 dark:text-gray-400" />
+//           </div>
+//         </div>
+
+//         <div className="rounded-lg border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm font-medium text-gray-500">Collected by Drivers</p>
+//               <h4 className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
+//                 ₹{processedData.summary.totalCollectedFromCustomers.toLocaleString()}
+//               </h4>
+//             </div>
+//             <Truck className="h-10 w-10 text-green-600 dark:text-green-400" />
+//           </div>
+//         </div>
+
+//         <div className="rounded-lg border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm font-medium text-gray-500">Settled by Admin</p>
+//               <h4 className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+//                 ₹{processedData.summary.totalSettledByAdmin.toLocaleString()}
+//               </h4>
+//             </div>
+//             <CheckCircle className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+//           </div>
+//         </div>
+
+//         <div className="rounded-lg border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <p className="text-sm font-medium text-gray-500">Pending from Customers</p>
+//               <h4 className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
+//                 ₹{processedData.summary.pendingFromCustomersToDrivers.toLocaleString()}
+//               </h4>
+//             </div>
+//             <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Driver Wise Settlement Status */}
+//       <div className="mb-6 rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//         <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//           <div className="flex items-center gap-3">
+//             <Truck className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+//             <h3 className="text-xl font-bold text-black dark:text-white">
+//               Driver Collection & Settlement Status
+//             </h3>
+//           </div>
+//         </div>
+//         <div className="p-6">
+//           {processedData.driverData.length > 0 ? (
+//             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+//               {processedData.driverData.map((driver) => (
+//                 <div
+//                   key={driver.driverId}
+//                   className={`rounded-lg p-6 border-2 ${
+//                     driver.pendingToAdmin > 0
+//                       ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20"
+//                       : "border-green-500 bg-green-50 dark:bg-green-900/20"
+//                   }`}
+//                 >
+//                   <div className="flex items-center justify-between mb-4">
+//                     <div>
+//                       <p className="text-lg font-bold text-black dark:text-white">{driver.driverName}</p>
+//                       <p className="text-sm text-gray-600 dark:text-gray-400">{driver.vehicleNumber}</p>
+//                     </div>
+//                     {driver.pendingToAdmin > 0 ? (
+//                       <AlertTriangle className="h-10 w-10 text-orange-600 dark:text-orange-400" />
+//                     ) : (
+//                       <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+//                     )}
+//                   </div>
+//                   <div className="space-y-3">
+//                     <div className="flex justify-between">
+//                       <span className="text-sm text-gray-600">Collected from Customers</span>
+//                       <span className="font-bold text-black dark:text-white">
+//                         ₹{driver.collectedFromCustomers.toLocaleString()}
+//                       </span>
+//                     </div>
+//                     <div className="flex justify-between">
+//                       <span className="text-sm text-gray-600">Settled to Admin</span>
+//                       <span className="font-bold text-green-600 dark:text-green-400">
+//                         ₹{driver.settledToAdmin.toLocaleString()}
+//                       </span>
+//                     </div>
+//                     {driver.pendingToAdmin > 0 && (
+//                       <div className="flex justify-between pt-3 border-t-2 border-orange-300">
+//                         <span className="text-sm font-bold text-orange-600">Pending to Admin</span>
+//                         <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+//                           ₹{driver.pendingToAdmin.toLocaleString()}
+//                         </span>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           ) : (
+//             <NoDataCard icon={Truck} title="No Driver Data" message="No driver collection data available" />
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Payment Methods */}
+//       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Payment Methods Breakdown
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.paymentMethods.length > 0 ? (
+//               <div className="space-y-4">
+//                 {processedData.paymentMethods.map((method, index) => (
+//                   <div key={index} className="rounded-lg border border-stroke p-4 dark:border-strokedark">
+//                     <div className="mb-3 flex items-center justify-between">
+//                       <span className="font-semibold capitalize text-black dark:text-white">
+//                         {method.method.replace(/_/g, ' ')}
+//                       </span>
+//                       <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+//                         {method.count} transactions
+//                       </span>
+//                     </div>
+//                     <div className="flex items-center justify-between">
+//                       <span className="text-sm text-gray-500">Total Amount:</span>
+//                       <span className="text-lg font-bold text-black dark:text-white">
+//                         ₹{method.amount.toLocaleString()}
+//                       </span>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             ) : (
+//               <NoDataCard icon={CreditCard} title="No Payment Methods" message="No payment methods data available" />
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Product Sales Distribution */}
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <PieChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Product Sales Distribution
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.productSalesData.length > 0 ? (
+//               <ChartThree data={processedData.productSalesData} colors={COLORS} />
+//             ) : (
+//               <NoDataCard icon={PieChart} title="No Product Sales Data" message="No product sales distribution data available." />
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Product Revenue & Top Customers */}
+//       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Product Revenue Analysis
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.productRevenueData.length > 0 ? (
+//               <ProductRevenueChart data={processedData.productRevenueData} />
+//             ) : (
+//               <NoDataCard icon={BarChart3} title="No Product Revenue Data" message="No product revenue data available for analysis." />
+//             )}
+//           </div>
+//         </div>
+
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Top Customers
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.topCustomers.length > 0 ? (
+//               <div className="space-y-4">
+//                 {processedData.topCustomers.map((customer, index) => (
+//                   <div key={index} className="flex items-center justify-between rounded-lg bg-gray-50 p-4 dark:bg-meta-4">
+//                     <div className="flex items-center gap-3">
+//                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+//                         <User className="h-6 w-6 text-green-600 dark:text-green-400" />
+//                       </div>
+//                       <div>
+//                         <p className="font-semibold text-black dark:text-white">{customer.name}</p>
+//                         <p className="text-sm text-gray-500">{customer.phone} • {customer.zone}</p>
+//                       </div>
+//                     </div>
+//                     <div className="text-right">
+//                       <p className="text-lg font-bold text-green-600 dark:text-green-400">
+//                         ₹{customer.totalSpent.toLocaleString()}
+//                       </p>
+//                       <p className="text-sm text-gray-500">{customer.orderCount} orders</p>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             ) : (
+//               <NoDataCard icon={Users} title="No Customer Data" message="No top customers data available for the selected period." />
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Zone Revenue & Payment Status */}
+//       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <MapPin className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Revenue by Zone
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.zoneData.length > 0 ? (
+//               <div className="space-y-3">
+//                 {processedData.zoneData.map((zone, index) => (
+//                   <div key={index} className="rounded-lg border border-stroke p-4 dark:border-strokedark">
+//                     <div className="mb-2 flex items-center justify-between">
+//                       <div className="flex items-center gap-2">
+//                         <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+//                         <span className="font-semibold text-black dark:text-white">{zone.zone}</span>
+//                       </div>
+//                       <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+//                         {zone.count} orders
+//                       </span>
+//                     </div>
+//                     <div className="flex items-center justify-between">
+//                       <span className="text-sm text-gray-500">Total Revenue:</span>
+//                       <span className="text-lg font-bold text-black dark:text-white">
+//                         ₹{zone.revenue.toLocaleString()}
+//                       </span>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             ) : (
+//               <NoDataCard icon={MapPin} title="No Zone Data" message="No revenue data by zone available." />
+//             )}
+//           </div>
+//         </div>
+
+//         <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//           <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//             <div className="flex items-center gap-3">
+//               <Funnel className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+//               <h3 className="text-lg font-semibold text-black dark:text-white">
+//                 Payment Status Overview
+//               </h3>
+//             </div>
+//           </div>
+//           <div className="p-6">
+//             {processedData.statusData.length > 0 ? (
+//               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+//                 {processedData.statusData.map((status, index) => (
+//                   <div key={index} className="rounded-lg border-2 border-stroke bg-gradient-to-br from-gray-50 to-white p-5 dark:border-strokedark dark:from-meta-4 dark:to-boxdark">
+//                     <div className="mb-3 flex items-center justify-between">
+//                       <span className="text-sm font-semibold uppercase text-gray-600 dark:text-gray-400">
+//                         {status.type}
+//                       </span>
+//                       <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${status.status === "PAID"
+//                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+//                           : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+//                         }`}>
+//                         {status.status === "PAID" ? <CheckCircle size={12} /> : <Clock size={12} />}
+//                         {status.status}
+//                       </span>
+//                     </div>
+//                     <div className="space-y-2">
+//                       <div className="flex justify-between border-b border-stroke pb-2 dark:border-strokedark">
+//                         <span className="text-sm text-gray-600 dark:text-gray-400">Transactions:</span>
+//                         <span className="font-bold text-black dark:text-white">{status.count}</span>
+//                       </div>
+//                       <div className="flex justify-between border-b border-stroke pb-2 dark:border-strokedark">
+//                         <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
+//                         <span className="font-bold text-black dark:text-white">₹{status.amount.toLocaleString()}</span>
+//                       </div>
+//                       <div className="flex justify-between border-b border-stroke pb-2 dark:border-strokedark">
+//                         <span className="text-sm text-gray-600 dark:text-gray-400">Collected:</span>
+//                         <span className="font-bold text-green-600 dark:text-green-400">₹{status.collected.toLocaleString()}</span>
+//                       </div>
+//                       {status.pending > 0 && (
+//                         <div className="flex justify-between">
+//                           <span className="text-sm text-gray-600 dark:text-gray-400">Pending:</span>
+//                           <span className="font-bold text-orange-600 dark:text-orange-400">₹{status.pending.toLocaleString()}</span>
+//                         </div>
+//                       )}
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             ) : (
+//               <NoDataCard icon={Funnel} title="No Payment Status Data" message="No payment status overview available." />
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Recent Transactions */}
+//       <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+//         <div className="border-b border-stroke px-6 py-4 dark:border-strokedark">
+//           <div className="flex items-center gap-3">
+//             <ShoppingCart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+//             <h3 className="text-lg font-semibold text-black dark:text-white">
+//               Recent Transactions
+//             </h3>
+//           </div>
+//         </div>
+//         <div className="p-6">
+//           {processedData.recentTransactions.length > 0 ? (
+//             <div className="overflow-x-auto">
+//               <table className="w-full">
+//                 <thead>
+//                   <tr className="bg-gray-50 dark:bg-meta-4">
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Customer
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Order
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Amount
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Method
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Status
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Settlement
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-black dark:text-white">
+//                       Date
+//                     </th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="divide-y divide-stroke dark:divide-strokedark">
+//                   {processedData.recentTransactions.map((transaction) => (
+//                     <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-meta-4">
+//                       <td className="px-6 py-4">
+//                         <div>
+//                           <p className="font-semibold text-black dark:text-white">
+//                             {transaction.customer?.name || 'N/A'}
+//                           </p>
+//                           <p className="text-sm text-gray-500">
+//                             {transaction.customer?.phone || 'N/A'}
+//                           </p>
+//                         </div>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <span className="font-semibold text-black dark:text-white">
+//                           {transaction.order?.orderNumberDisplay || 'N/A'}
+//                         </span>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <div>
+//                           <p className="font-bold text-black dark:text-white">
+//                             ₹{transaction.amount.toLocaleString()}
+//                           </p>
+//                           {transaction.paidAmount > 0 && transaction.paidAmount < transaction.amount && (
+//                             <p className="text-sm text-green-600 dark:text-green-400">
+//                               Paid: ₹{transaction.paidAmount.toLocaleString()}
+//                             </p>
+//                           )}
+//                         </div>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <span className="text-sm capitalize text-gray-600 dark:text-gray-400">
+//                           {transaction.paymentMethod?.replace(/_/g, ' ') || 'N/A'}
+//                         </span>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <span
+//                           className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${transaction.status === "PAID"
+//                               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+//                               : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+//                             }`}
+//                         >
+//                           {transaction.status === "PAID" ? <CheckCircle size={12} /> : <Clock size={12} />}
+//                           {transaction.status}
+//                         </span>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <span
+//                           className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${transaction.settledByAdmin
+//                               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+//                               : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+//                             }`}
+//                         >
+//                           {transaction.settledByAdmin ? "Settled" : "Pending"}
+//                         </span>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <span className="text-sm text-gray-600 dark:text-gray-400">
+//                           {new Date(transaction.paymentDate).toLocaleDateString('en-US', {
+//                             month: 'short',
+//                             day: 'numeric',
+//                             year: 'numeric',
+//                           })}
+//                         </span>
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           ) : (
+//             <div className="flex flex-col items-center justify-center py-12">
+//               <XCircle className="mb-4 h-12 w-12 text-gray-400" />
+//               <h4 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">No Recent Transactions</h4>
+//               <p className="text-sm text-gray-500 dark:text-gray-400">No transactions found for the selected period.</p>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+//     </DefaultLayout>
+//   );
+// }

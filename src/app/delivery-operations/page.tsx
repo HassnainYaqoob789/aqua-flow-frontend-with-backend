@@ -7,10 +7,10 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 import {
-  useBulkAssignDriver, 
+  useBulkAssignDriver,
   useCustomerByZone,
   useZone,
-  useDriver, 
+  useDriver,
 } from "@/lib/api/servicesHooks";
 
 import { useEffect, useState } from "react";
@@ -117,6 +117,9 @@ export default function DeliveryOperations() {
       onSuccess: () => {
         // Refresh the customers list to reflect the new assignment state
         refetchCustomers();
+        setSelectedDriver("");
+        setSelectedDate("");
+        // useZoneStore.getState().setState({ selectedZoneId: "" });
       },
       onError: (error) => {
         console.error('Mutation error:', error);

@@ -3,7 +3,7 @@ import SignInForm from "./SignInForm"; // separate client form
 
 export const metadata = {
   title: "AquaFlow - Sign In",
-  description: "This is Next.js Signin Page TailAdmin Dashboard Template",
+  description: "Securely sign in to AquaFlow and take control of your water delivery operations.",
 };
 
 export default function SignInPage() {

@@ -68,7 +68,10 @@ export const INVENTORY_CREATE_URL = `${BASE_URL}/inventory/add-stock`;
 export const USERS_CREATE_URL = `${BASE_URL}/users/create`;
 export const USERS_GET_URL = `${BASE_URL}/users/all`;
 
-export const USERS_GET_STATS = `${BASE_URL}/users/getUsersStats`;
+// export const USERS_GET_STATS = `${BASE_URL}/users/getUsersStats`;
+
+export const USERS_GET_STATS = `${BASE_URL}/admin/dashboard`;
+
 
 
 
