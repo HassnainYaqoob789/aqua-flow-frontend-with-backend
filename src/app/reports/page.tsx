@@ -29,6 +29,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import dynamic from "next/dynamic";
 import { useReportStore } from "@/lib/api/servicesHooks";
+import { formatAmountRs } from "@/lib/utils/helperFunctions/formatAmountRs";
 
 // Dynamic imports for charts
 const ChartThree = dynamic(() => import("@/components/Charts/ChartThree"), { ssr: false });
@@ -397,7 +398,9 @@ export default function ReportsAnalytics() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-3xl font-bold text-black dark:text-white">
-                {processedData.summary.total}
+                {processedData.summary.total} 
+                {/* {formatAmountRs(processedData.summary.total)} */}
+
               </h4>
               <p className="mt-1 text-sm font-medium text-gray-500">Total Transactions</p>
             </div>
@@ -411,7 +414,9 @@ export default function ReportsAnalytics() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-3xl font-bold text-black dark:text-white">
-                Rs. {processedData.summary.totalAmount.toLocaleString()}
+                {/* Rs. {processedData.summary.totalAmount.toLocaleString()} */}
+                {formatAmountRs(processedData.summary.totalAmount)}
+
               </h4>
               <p className="mt-1 text-sm font-medium text-gray-500">₨ Total Revenue</p>
             </div>
@@ -425,7 +430,9 @@ export default function ReportsAnalytics() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-3xl font-bold text-green-600 dark:text-green-400">
-                Rs. {processedData.summary.totalCollected.toLocaleString()}
+                {/* Rs. {processedData.summary.totalCollected.toLocaleString()} */}
+                {formatAmountRs(processedData.summary.totalCollected)}
+
               </h4>
               <p className="mt-1 text-sm font-medium text-gray-500">Amount Collected</p>
             </div>
@@ -439,7 +446,9 @@ export default function ReportsAnalytics() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                Rs. {processedData.summary.totalPending.toLocaleString()}
+                {/* Rs. {processedData.summary.totalPending.toLocaleString()} */}
+                {formatAmountRs(processedData.summary.totalPending)}
+
               </h4>
               <p className="mt-1 text-sm font-medium text-gray-500">Pending Amount</p>
             </div>
@@ -509,7 +518,9 @@ export default function ReportsAnalytics() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                        Rs. {driver.amount.toLocaleString()}
+                        {/* Rs. {driver.amount.toLocaleString()} */}
+                        {formatAmountRs(driver.amount)}
+
                       </p>
                       <p className="text-sm text-gray-500">
                         {driver.collections} collection{driver.collections !== 1 ? 's' : ''}
@@ -555,7 +566,9 @@ export default function ReportsAnalytics() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">Total Amount:</span>
                       <span className="text-lg font-bold text-black dark:text-white">
-                        Rs. {method.amount.toLocaleString()}
+                        {/* Rs. {method.amount.toLocaleString()} */}
+                        {formatAmountRs(method.amount)}
+
                       </span>
                     </div>
                   </div>
@@ -650,7 +663,9 @@ export default function ReportsAnalytics() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                        Rs. {customer.totalSpent.toLocaleString()}
+                        {/* Rs. {customer.totalSpent.toLocaleString()} */}
+                        {formatAmountRs(customer.totalSpent)}
+
                       </p>
                       <p className="text-sm text-gray-500">
                         {customer.orderCount} order{customer.orderCount !== 1 ? 's' : ''}
@@ -699,7 +714,9 @@ export default function ReportsAnalytics() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">Total Revenue:</span>
                       <span className="text-lg font-bold text-black dark:text-white">
-                        Rs. {zone.revenue.toLocaleString()}
+                        {/* Rs. {zone.revenue.toLocaleString()} */}
+                        {formatAmountRs(zone.revenue)}
+
                       </span>
                     </div>
                   </div>
@@ -738,8 +755,8 @@ export default function ReportsAnalytics() {
                     </span>
                     <span
                       className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${status.status === "PAID"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                         }`}
                     >
                       {status.status === "PAID" ? (
@@ -760,7 +777,9 @@ export default function ReportsAnalytics() {
                     <div className="flex justify-between border-b border-stroke pb-2 dark:border-strokedark">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
                       <span className="font-bold text-black dark:text-white">
-                        Rs. {status.amount.toLocaleString()}
+                        {/* Rs. {status.amount.toLocaleString()} */}
+                        {formatAmountRs(status.amount)}
+
                       </span>
                     </div>
                     <div className="flex justify-between border-b border-stroke pb-2 dark:border-strokedark">
@@ -854,7 +873,9 @@ export default function ReportsAnalytics() {
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-bold text-black dark:text-white">
-                            Rs. {transaction.amount.toLocaleString()}
+                            {/* Rs. {transaction.amount.toLocaleString()} */}
+                            {formatAmountRs(transaction.amount)}
+
                           </p>
                           {transaction.paidAmount > 0 && (
                             <p className="text-sm text-green-600 dark:text-green-400">
@@ -871,10 +892,10 @@ export default function ReportsAnalytics() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${transaction.status === "PAID"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : transaction.status === "PENDING"
-                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                                : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : transaction.status === "PENDING"
+                              ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
                             }`}
                         >
                           {transaction.status === "PAID" ? (

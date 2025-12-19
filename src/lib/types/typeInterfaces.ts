@@ -52,7 +52,7 @@ export interface Customer {
   zone?: {
     id: string;
     name: string;
-  } | null;
+  } | null; 
 
   lastOrderDate?: string | null;
   empties?: number;

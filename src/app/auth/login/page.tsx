@@ -2,7 +2,7 @@
 import SignInForm from "./SignInForm"; // separate client form
 
 export const metadata = {
-  title: "AquaFlow - Sign In",
+  title: "AquaFlow - Login In",
   description: "Securely sign in to AquaFlow and take control of your water delivery operations.",
 };
 

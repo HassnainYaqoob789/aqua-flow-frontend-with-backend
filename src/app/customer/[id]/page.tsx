@@ -178,12 +178,18 @@ export default function CustomerFormPage() {
   const mode = searchParams.get("mode");
   const isViewMode = mode === "view";
 
+  console.log(mode,'searchParams')
+
   const params = useParams();
   const id = params?.id as string;
   const isCreateMode = id === "new";
 
   const { data: customerList } = useCustomers();
   const { state: customerState } = useCustomerStore();
+
+  console.log("Customer List from useCustomers:", customerList);
+  console.log("Customer List from customerState:", customerState);
+
 
   const { data: zonesData, isLoading: isLoadingZones, isError: isErrorZones, refetch: refetchZones } = useZone();
   const zones = useZoneStore((s) => s.state.zone) || [];

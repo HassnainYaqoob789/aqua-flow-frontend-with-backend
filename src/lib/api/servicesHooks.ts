@@ -19,6 +19,7 @@ import { setInventory, updateInventory } from "../store/inventoryStore";
 import { useToastStore } from '../store/toastStore';
 import { addUser, setUsers, setUsersStats } from "../store/useUserStore";
 import { setReports } from "../store/reportsStore";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 export const useLogin = () => {
   const router = useRouter();
@@ -34,11 +35,31 @@ export const useLogin = () => {
 
 // ================================CUSTOMER HOOKS=========================
 
-export const useCustomers = createQueryFactory("customers", async () => {
-  const data = await getCustomers();
-  setCustomers(data.customers);
-  return data;
-});
+// export const useCustomers = createQueryFactory("customers", async () => {
+//   const data = await getCustomers();
+//   setCustomers(data.customers);
+//   return data;
+// });
+export const useCustomers = createQueryFactoryWithParams<
+  CustomerListResponse,
+  { page: number; limit?: number }
+>("customers", getCustomers);
+
+
+export const useInfiniteCustomers = (searchTerm: string = "") => {
+  return useInfiniteQuery({
+    queryKey: ["customers", "infinite", { search: searchTerm }],
+    queryFn: ({ pageParam = 1 }) =>
+      getCustomers({ page: pageParam, limit: 20, search: searchTerm }),
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
 
 export const useCreateCustomer = createMutationFactory(
   "customers",

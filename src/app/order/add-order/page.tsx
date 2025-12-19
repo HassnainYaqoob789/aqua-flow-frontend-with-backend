@@ -35,6 +35,7 @@ import { CreateOrderPayload, FormOrderItem, OrderItem } from "@/lib/types/typeIn
 import { useToastStore } from "@/lib/store/toastStore";
 import AddCustomerModal from "@/components/modals/AddCustomerModal";
 import SearchableSelect from "@/components/inputs/SearchableSelect";
+import SearchableCustomerSelect from "@/components/inputs/SearchableSelect";
 
 interface FormData {
   customer: string;
@@ -75,7 +76,7 @@ export default function AddOrder() {
   const createOrderMutation = useCreateOrder();
   useProducts();
   const products = useProductStore((state) => state.state.products);
-  useCustomers();
+  // useCustomers();
   const customers = useCustomerStore((state) => state.state.customers);
   useDriver();
   const drivers = useDriverStore((state) => state.state.drivers);
@@ -290,9 +291,8 @@ export default function AddOrder() {
           recurrence: formData.recurrence,
           preferredTime: formData.preferredTime,
         }),
-        ...(formData.withBottles && {
-          withBottles: true,
-        }),
+        withBottles: formData.withBottles,
+
       };
 
       await createOrderMutation.mutateAsync(payload);
@@ -377,11 +377,10 @@ export default function AddOrder() {
                     <User className="h-4 w-4" /> Customer Name *
                   </label>
                   <div className="flex gap-2">
-                    <SearchableSelect
-                      options={customerOptions}
+                    <SearchableCustomerSelect
                       value={formData.customer}
                       onChange={handleCustomerSelect}
-                      placeholder="Select a customer"
+                      placeholder="Search customer by name or phone..."
                       error={errors.customer}
                     />
                     <button

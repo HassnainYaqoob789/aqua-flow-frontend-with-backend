@@ -68,11 +68,45 @@ export const loginUser = (payload: LoginRequest) =>
 
 // =========================CUSTOMER APIS=========================
 // Return full list response
-export const getCustomers = async (): Promise<CustomerListResponse> => {
-  return await apiGet<CustomerListResponse>(CUSTOMER_GET_URL);
+// export const getCustomers = async (): Promise<CustomerListResponse> => {
+//   return await apiGet<CustomerListResponse>(CUSTOMER_GET_URL);
+// };
+
+// src/lib/api/customerApi.ts (or wherever your getCustomers is)
+// export const getCustomers = async ({
+//   page = 1,
+//   limit = 10,
+// }: {
+//   page?: number;
+//   limit?: number;
+// } = {}): Promise<CustomerListResponse> => {
+//   const url = new URL(CUSTOMER_GET_URL);
+//   url.searchParams.append("page", page.toString());
+//   url.searchParams.append("limit", limit.toString());
+//   // Add more params later: search, zoneId, status, etc.
+
+//   return await apiGet<CustomerListResponse>(url.toString());
+// };
+
+export const getCustomers = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+} = {}): Promise<CustomerListResponse> => {
+  const url = new URL(CUSTOMER_GET_URL);
+  url.searchParams.append("page", page.toString());
+  url.searchParams.append("limit", limit.toString());
+  if (search) url.searchParams.append("search", search);
+
+  return await apiGet<CustomerListResponse>(url.toString());
 };
+
 export const createCustomer = async (
-  body: Partial<Customer> & { password?: string } // if backend accepts password
+  body: Partial<Customer>
 ): Promise<Customer> => {
   return await apiPost<Customer>(CUSTOMER_CREATE_URL, body);
 };

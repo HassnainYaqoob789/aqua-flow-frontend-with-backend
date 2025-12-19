@@ -200,7 +200,7 @@ export default function DeliveryOperations() {
                     <option value="">Select Zone</option>
                     {zones.map((zone) => (
                       <option key={zone.id} value={zone.id}>
-                        {zone.name}
+                        {zone.name} 
                       </option>
                     ))}
                   </select>
